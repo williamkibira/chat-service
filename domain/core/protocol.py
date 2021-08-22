@@ -2,11 +2,15 @@ import abc
 import struct
 import uuid
 from datetime import datetime
-from typing import Dict
+from typing import Dict, NamedTuple, Optional
 
 import simplejson as json
+from pymessagebus import CommandBus
+from pymessagebus.default import commandbus
 from twisted.internet.protocol import Protocol, connectionDone
 from twisted.python import failure
+
+from domain.chat.particpant.helper import ParticipantService
 from domain.chat.types import MESSAGE_HEADER, MessageType
 from domain.chat.types import ResponseType
 from domain.core.claims import Claims
@@ -66,16 +70,23 @@ class ClientConnection(abc.ABC, Protocol):
         pass
 
     @abc.abstractmethod
-    def device(self) -> str:
+    def device(self) -> Optional[DeviceDetails]:
         pass
 
     @abc.abstractmethod
-    def resolve_participant(self, identifier: str, device_information: DeviceDetails) -> bool:
+    def resolve_participant(self, identifier: str, device_information: DeviceDetails) -> None:
         pass
 
     @abc.abstractmethod
-    def participant_identifier(self) -> str:
+    def participant_identifier(self) -> Optional[str]:
         pass
+
+
+class DeviceBroadcastCommand(NamedTuple):
+    participant_identifier: str
+    unique_identifier: str
+    response_type: ResponseType
+    payload: bytearray
 
 
 class DeviceCollective(object):
@@ -88,14 +99,23 @@ class DeviceCollective(object):
         connection.resolve_participant(identifier=self.__participant_identifier, device_information=device_information)
 
     def remove_connection(self, connection: ClientConnection) -> bool:
-        del self.__connections[connection.unique_identifier()]
+        if connection.unique_identifier() in self.__connections:
+            del self.__connections[connection.unique_identifier()]
+            return True
+        return False
+
+    def send_to_other_devices(self, unique_identifier: str, response_type: ResponseType, payload: bytearray) -> bool:
+        [connection.send_message(response_type=response_type, payload=payload)
+            for identifier, connection in self.__connections if identifier is not unique_identifier]
+        return True
 
 
 class ConnectionRegistry(object):
-    def __init__(self):
+    def __init__(self, command_bus: CommandBus):
         self.__connections: Dict[DeviceCollective] = {}
         self.__pending_registration: Dict[ClientConnection] = {}
         self.__log = Logger(__file__)
+        command_bus.add_handler(DeviceBroadcastCommand, self.__handle_device_broadcast)
 
     def register(self, payload: bytearray, connection: ClientConnection) -> None:
         # parse the payload identification content
@@ -165,12 +185,23 @@ class ConnectionRegistry(object):
     def add_to_pending_identification(self, connection: ClientConnection):
         self.__pending_registration[connection.unique_identifier()] = connection
 
+    def __handle_device_broadcast(self, command: DeviceBroadcastCommand) -> None:
+        self.__log.info("Received a broad cast for the other devices that are connected")
+        self.__connections[command.participant_identifier].send_to_other_devices(
+            unique_identifier=command.unique_identifier,
+            payload=command.payload,
+            response_type=command.response_type
+        )
+
 
 class ConnectedClientProtocol(ClientConnection):
 
-    def __init__(self, registry: ConnectionRegistry):
+    def __init__(self, registry: ConnectionRegistry, participant_service: ParticipantService):
         self.registry: ConnectionRegistry = registry
+        self.__participant_service = participant_service
         self.__unique_identifier: str = str(uuid.uuid4())
+        self.__participant_identifier: Optional[str] = None
+        self.__device_information: Optional[DeviceDetails] = None
 
     def dataReceived(self, data: bytearray):
         header = data[0:MESSAGE_HEADER]
@@ -180,7 +211,8 @@ class ConnectedClientProtocol(ClientConnection):
 
     def connectionMade(self):
         # Send a request for identification information
-        self.send_message(response_type=ResponseType.REQUEST_IDENTITY, payload=bytes())
+        self.registry.add_to_pending_identification(self)
+        self.send_message(response_type=ResponseType.REQUEST_IDENTITY, payload="".encode())
 
     def connectionLost(self, reason: failure.Failure = connectionDone):
         self.registry.remove(self)
@@ -188,7 +220,6 @@ class ConnectedClientProtocol(ClientConnection):
     def __process_message(self, message_type: MessageType, payload: bytes) -> None:
         if message_type == MessageType.IDENTITY:
             self.registry.register(self, payload)
-            self.registry.add_to_pending_identification(self)
         elif message_type == MessageType.DISCONNECT:
             self.registry.remove(self)
 
@@ -196,14 +227,15 @@ class ConnectedClientProtocol(ClientConnection):
         packet = struct.pack("!HL", response_type.value, len(payload)) + payload
         self.transport.write(data=packet)
 
-    def resolve_participant(self, claims: Claims) -> bool:
-        pass
+    def resolve_participant(self, identifier: str, device_information: DeviceDetails) -> bool:
+        self.__participant_identifier = identifier
+        self.__device_information = device_information
 
-    def participant_identifier(self) -> str:
-        pass
+    def participant_identifier(self) -> Optional[str]:
+        return self.__participant_identifier
 
-    def device(self) -> str:
-        return ""
+    def device(self) -> Optional[DeviceDetails]:
+        return self.__device_information
 
     def unique_identifier(self):
         return self.__unique_identifier
