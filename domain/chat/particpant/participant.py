@@ -1,18 +1,17 @@
 from domain.chat.messages.contract import Message
-from domain.chat.messages.repository import MessageRepository
+from domain.core.claims import Claims
 
 
 class Participant(object):
-    def __init__(self, repository: MessageRepository):
+    def __init__(self):
         self.__identifier = ""
         self.__nickname = ""
-        self.__repository = repository
 
-    def on_direct_message_data_received(self, data: bytes):
+    def on_direct_message_data_received(self, data: bytes) -> None:
         # Persist the message, then send it off
         pass
 
-    def on_group_message_received(self, identifier: str, message: Message):
+    def on_group_message_received(self, identifier: str, message: Message) -> None:
         pass
 
     @property

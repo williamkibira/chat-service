@@ -1,6 +1,6 @@
 import abc
 import enum
-from timestamp import timestamp
+import timestamp
 
 
 class Message(abc.ABC):
