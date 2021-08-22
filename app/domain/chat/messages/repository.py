@@ -1,7 +1,7 @@
 import abc
 from typing import List
 
-from domain.chat.messages.contract import Message
+from app.domain.chat.messages.contract import Message
 
 
 class MessageRepository(abc.ABC):

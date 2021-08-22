@@ -2,7 +2,7 @@ import abc
 from abc import ABC
 from typing import List
 
-from domain.chat.group.contracts import GroupDetails
+from app.domain.chat.group.contracts import GroupDetails
 
 
 class GroupRepository(ABC):

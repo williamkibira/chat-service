@@ -1,9 +1,9 @@
 from typing import Dict, List
 import simplejson as json
 
-from domain.chat.messages.repository import MessageRepository
-from domain.chat.particpant.participant import Participant
-from domain.chat.types import MessageType
+from app.domain.chat.messages.repository import MessageRepository
+from app.domain.chat.particpant.participant import Participant
+from app.domain.chat.types import MessageType
 
 
 class Group(object):

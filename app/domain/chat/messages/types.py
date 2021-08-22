@@ -1,4 +1,4 @@
-from domain.chat.messages.contract import Message, MediaType
+from app.domain.chat.messages.contract import Message, MediaType
 
 
 # This is meant to be a plain text message

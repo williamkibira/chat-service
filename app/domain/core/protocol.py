@@ -1,22 +1,16 @@
 import abc
-import struct
-import uuid
 from datetime import datetime
 from typing import Dict, NamedTuple, Optional
 
 import simplejson as json
 from pymessagebus import CommandBus
-from pymessagebus.default import commandbus
-from twisted.internet.protocol import Protocol, connectionDone
-from twisted.python import failure
+from twisted.internet.protocol import Protocol
 
-from domain.chat.particpant.helper import ParticipantService
-from domain.chat.types import MESSAGE_HEADER, MessageType
-from domain.chat.types import ResponseType
-from domain.core.claims import Claims
-from domain.core.identification_pb2 import Identification, Device
-from domain.core.logging import Logger
-from domain.core.security import extract_token_claims, verify_claim
+from app.domain.chat.types import ResponseType
+from app.core.logging.loggers import LoggerMixin
+from app.core.security.claims import Claims
+from app.domain.core.identification_pb2 import Identification, Device
+from app.core.security.restriction import Restrictions
 
 
 class DeviceDetails(object):
@@ -106,29 +100,25 @@ class DeviceCollective(object):
 
     def send_to_other_devices(self, unique_identifier: str, response_type: ResponseType, payload: bytearray) -> bool:
         [connection.send_message(response_type=response_type, payload=payload)
-            for identifier, connection in self.__connections if identifier is not unique_identifier]
+         for identifier, connection in self.__connections if identifier is not unique_identifier]
         return True
 
 
-class ConnectionRegistry(object):
-    def __init__(self, command_bus: CommandBus):
+class ConnectionRegistry(LoggerMixin):
+    def __init__(self, command_bus: CommandBus, restrictions: Restrictions):
         self.__connections: Dict[DeviceCollective] = {}
         self.__pending_registration: Dict[ClientConnection] = {}
-        self.__log = Logger(__file__)
+        self.__restrictions: Restrictions = restrictions
         command_bus.add_handler(DeviceBroadcastCommand, self.__handle_device_broadcast)
 
     def register(self, payload: bytearray, connection: ClientConnection) -> None:
-        # parse the payload identification content
-        # grab the user identifier for the session
-        # grab all other relevant information
-        # register connection against information payload in dictionary
         identification: Identification = Identification()
         identification.ParseFromString(payload)
         device_information = parse_from_device_proto(device=identification.device)
-        claims: Claims = extract_token_claims(encrypted_token=str(identification.token))
-        is_valid, error_message = verify_claim(claims=claims)
+        claims: Claims = self.__restrictions.extract_token_claims(encrypted_token=str(identification.token))
+        is_valid, error_message = Restrictions.verify_claim(claims=claims)
         del self.__pending_registration[connection.unique_identifier()]
-        self.__log.info("Removing connection from pending registration")
+        self._logger.info("Removing connection from pending registration")
         if not is_valid:
             content = json.dumps({
                 'error': 'IDENTITY-REJECTED',
@@ -136,7 +126,7 @@ class ConnectionRegistry(object):
                 'occurred_at': datetime.utcnow().isoformat()
             })
             connection.send_message(response_type=ResponseType.IDENTITY_REJECTION, payload=content.encode())
-            self.__log.error("IDENTIFICATION REJECTED FOR: {}", connection.nickname())
+            self._logger.error("IDENTIFICATION REJECTED FOR: {}", connection.nickname())
         elif self.__add_connection(claims=claims, connection=connection, device_information=device_information):
             content = json.dumps({
                 'message': 'IDENTITY-ACCEPTED',
@@ -144,7 +134,7 @@ class ConnectionRegistry(object):
                 'occurred_at': datetime.utcnow().isoformat()
             })
             connection.send_message(response_type=ResponseType.IDENTITY_ACCEPTED, payload=content.encode())
-            self.__log.info("IDENTIFICATION ACCEPTED -> WELCOME: {}", connection.nickname())
+            self._logger.info("IDENTIFICATION ACCEPTED -> WELCOME: {}", connection.nickname())
 
     def remove(self, connection: ClientConnection):
         if self.__remove_connection(connection=connection):
@@ -158,11 +148,11 @@ class ConnectionRegistry(object):
             })
             if connection.connected == 1:
                 connection.send_message(response_type=ResponseType.DISCONNECTION_ACCEPTED, payload=content.encode())
-                self.__log.info("GRACEFUL DISCONNECTION: -> {}", connection.nickname())
+                self._logger.info("GRACEFUL DISCONNECTION: -> {}", connection.nickname())
             else:
-                self.__log.warning("CONNECTION LOST: -> {}", connection.nickname())
+                self._logger.warning("CONNECTION LOST: -> {}", connection.nickname())
         else:
-            self.__log.error(
+            self._logger.error(
                 "NO MATCHING CONNECTION FOUND: -> {0} {1} \n DEVICE: {2}",
                 connection.nickname(),
                 connection.unique_identifier(),
@@ -186,59 +176,9 @@ class ConnectionRegistry(object):
         self.__pending_registration[connection.unique_identifier()] = connection
 
     def __handle_device_broadcast(self, command: DeviceBroadcastCommand) -> None:
-        self.__log.info("Received a broad cast for the other devices that are connected")
+        self._logger.info("Received a broad cast for the other devices that are connected")
         self.__connections[command.participant_identifier].send_to_other_devices(
             unique_identifier=command.unique_identifier,
             payload=command.payload,
             response_type=command.response_type
         )
-
-
-class ConnectedClientProtocol(ClientConnection):
-
-    def __init__(self, registry: ConnectionRegistry, participant_service: ParticipantService):
-        self.registry: ConnectionRegistry = registry
-        self.__participant_service = participant_service
-        self.__unique_identifier: str = str(uuid.uuid4())
-        self.__participant_identifier: Optional[str] = None
-        self.__device_information: Optional[DeviceDetails] = None
-
-    def dataReceived(self, data: bytearray):
-        header = data[0:MESSAGE_HEADER]
-        (message_type_value, message_size) = struct.unpack("!HL", header)
-        payload: bytes = bytes[MESSAGE_HEADER: message_size + MESSAGE_HEADER]
-        self.__process_message(message_type=MessageType(message_type_value), payload=payload)
-
-    def connectionMade(self):
-        # Send a request for identification information
-        self.registry.add_to_pending_identification(self)
-        self.send_message(response_type=ResponseType.REQUEST_IDENTITY, payload="".encode())
-
-    def connectionLost(self, reason: failure.Failure = connectionDone):
-        self.registry.remove(self)
-
-    def __process_message(self, message_type: MessageType, payload: bytes) -> None:
-        if message_type == MessageType.IDENTITY:
-            self.registry.register(self, payload)
-        elif message_type == MessageType.DISCONNECT:
-            self.registry.remove(self)
-
-    def send_message(self, response_type: ResponseType, payload: bytearray) -> None:
-        packet = struct.pack("!HL", response_type.value, len(payload)) + payload
-        self.transport.write(data=packet)
-
-    def resolve_participant(self, identifier: str, device_information: DeviceDetails) -> bool:
-        self.__participant_identifier = identifier
-        self.__device_information = device_information
-
-    def participant_identifier(self) -> Optional[str]:
-        return self.__participant_identifier
-
-    def device(self) -> Optional[DeviceDetails]:
-        return self.__device_information
-
-    def unique_identifier(self):
-        return self.__unique_identifier
-
-    def nickname(self):
-        return ""
