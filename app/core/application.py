@@ -1,7 +1,6 @@
 import asyncio
 import sys
 
-from decouple import config
 from pymessagebus import CommandBus
 from pymessagebus.middleware.logger import get_logger_middleware
 from twisted.internet import asyncioreactor
@@ -9,13 +8,12 @@ from twisted.internet.asyncioreactor import AsyncioSelectorReactor
 from twisted.internet.defer import ensureDeferred
 from twisted.internet.task import react
 
-from app.domain.chat.particpant.participant import ParticipantService
-from app.domain.core.protocol import ConnectionRegistry
 from app.core.configuration import Configuration, BuildInformation
-from app.core.database.provider import SQLProvider
 from app.core.logging.loggers import Logger
 from app.core.security.restriction import Restrictions
 from app.core.service.factory import ServiceFactory
+from app.domain.chat.particpant.participant import ParticipantService
+from app.domain.core.protocol import ConnectionRegistry
 
 if sys.platform == "win32":
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
@@ -37,10 +35,6 @@ class Application(object):
 
     def __initialize(self, name: str, version: str) -> None:
         self.logger.info("Starting {0} VER: {1}".format(name, version))
-        database_provider = SQLProvider(
-            uri=self.__configuration.database_uri(),
-            debug=config('DEBUG', default=True, cast=bool))
-        database_provider.initialize()
 
         return react(
             lambda reactor: ensureDeferred(
@@ -50,6 +44,11 @@ class Application(object):
 
     async def _initializer(self, reactor: AsyncioSelectorReactor):
         reactor.listenTCP(self.__configuration.port(),
-                          ServiceFactory(registry=self.registry, participant_service=self.__participant_service))
+                          ServiceFactory(
+                              registry=self.registry,
+                              participant_service=self.__participant_service,
+                              configuration=self.__configuration,
+                              event_loop=asyncio.get_event_loop()
+                          ))
         self.logger.info("Service Activated")
         reactor.run()
