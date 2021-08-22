@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+message Device {
+    string name = 1;
+    string operating_system = 2;
+    string version = 3;
+    string ip_address = 4;
+}
+
+message Identification {
+    bytes token = 1;
+    Device device = 2;
+}
