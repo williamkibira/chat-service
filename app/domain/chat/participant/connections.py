@@ -9,7 +9,7 @@ from twisted.internet.protocol import Protocol
 from app.domain.chat.types import ResponseType
 from app.core.logging.loggers import LoggerMixin
 from app.core.security.claims import Claims
-from app.domain.core.identification_pb2 import Identification, Device
+from app.domain.chat.participant.identification_pb2 import Identification, Device
 from app.core.security.restriction import Restrictions
 
 

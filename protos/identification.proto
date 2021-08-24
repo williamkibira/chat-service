@@ -12,6 +12,10 @@ message Identification {
     Device device = 2;
 }
 
+message DetailsRequest {
+    string identifier = 1;
+}
+
 message Details {
     string first_name = 1;
     string last_name = 2;

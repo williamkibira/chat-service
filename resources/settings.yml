@@ -3,3 +3,11 @@ port: 5200
 health_check: http://localhost:5200/health-check
 database:
   uri: sqlite:///sample.db
+nats:
+  verbose: "true"
+  allow_reconnect: "true"
+  connect_timeout: 10000
+  reconnect_time_wait: 2000
+  max_reconnect_attempts: 20
+  servers:
+    - "nats://127.0.0.1:4222"

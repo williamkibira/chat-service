@@ -5,9 +5,12 @@ from typing import Optional
 from twisted.internet.protocol import connectionDone
 from twisted.python import failure
 
+from app.core.logging.loggers import LoggerMixin
 from app.domain.chat.messages.contract import Message
+from app.domain.chat.participant.connections import ClientConnection, ConnectionRegistry, DeviceDetails
+from app.domain.chat.participant.listeners import ParticipantPassOverListener
+from app.domain.chat.participant.node_pb2 import ParticipantPassOver
 from app.domain.chat.types import MESSAGE_HEADER, MessageType, ResponseType
-from app.domain.core.protocol import ClientConnection, ConnectionRegistry, DeviceDetails
 
 
 class Participant(object):
@@ -31,10 +34,18 @@ class Participant(object):
         return self.__identifier
 
 
-class ParticipantService(object):
+class ParticipantService(LoggerMixin):
+    def __init__(self):
+        self._info("GOT LOADED")
 
     def fetch(self, identifier) -> Participant:
         pass
+
+    @ParticipantPassOverListener(event=ParticipantPassOver)
+    def on_external_participant_event(self, event: ParticipantPassOver) -> None:
+        self._info("BEEN CALLED")
+        print(self.__class__.__name__)
+        print("CRACKERS")
 
 
 class ConnectedClientProtocol(ClientConnection):

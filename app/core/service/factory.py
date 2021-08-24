@@ -1,4 +1,5 @@
 from asyncio import AbstractEventLoop
+from threading import Thread
 from typing import Tuple
 
 from decouple import config
@@ -6,12 +7,15 @@ from twisted.internet import protocol
 
 from app.core.configuration import Configuration
 from app.core.database.provider import SQLProvider
-from app.domain.chat.particpant.participant import ConnectedClientProtocol, ParticipantService
-from app.domain.core.protocol import ConnectionRegistry
 from app.core.logging.loggers import LoggerMixin
+from app.domain.chat.participant.connections import ConnectionRegistry
+from app.domain.chat.participant.factory import get_client
+from app.domain.chat.participant.participant import ConnectedClientProtocol, ParticipantService
 
 
 class ServiceFactory(protocol.ServerFactory, LoggerMixin):
+    thread: Thread
+
     def __init__(
             self,
             registry: ConnectionRegistry,
@@ -23,7 +27,6 @@ class ServiceFactory(protocol.ServerFactory, LoggerMixin):
         self.__registry: ConnectionRegistry = registry
         self.__configuration: Configuration = configuration
         self.__participant_service = participant_service
-        self._logger.info("ACTIVATED SERVICE FACTORY")
         self.__database_provider = SQLProvider(
             uri=self.__configuration.database_uri(),
             debug=config('DEBUG', default=True, cast=bool))
@@ -32,7 +35,9 @@ class ServiceFactory(protocol.ServerFactory, LoggerMixin):
         return ConnectedClientProtocol(registry=self.__registry, participant_service=self.__participant_service)
 
     def startFactory(self):
+        self._logger.info("ACTIVATED SERVICE RESOURCES")
         self.__database_provider.initialize()
 
     def stopFactory(self):
-        pass
+        self.__database_provider.close()
+        get_client().shutdown()

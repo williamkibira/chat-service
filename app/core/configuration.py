@@ -1,8 +1,10 @@
 import os
+import socket
 from typing import Dict, List
+
 from decouple import config
 from yaml import safe_load
-import socket
+
 from app.core.discovery.client import ServiceDiscoveryClient, ConsulClient, Credentials
 from app.settings import RESOURCES_DIRECTORY
 
@@ -61,9 +63,10 @@ class Configuration(object):
             client: ServiceDiscoveryClient,
             test_mode: bool = False) -> None:
         self.__build_information = build_information
-        self.__database_uri = content_map["database"]["uri"]
-        self.__port = int(content_map["port"])
-        self.__client = client
+        self.__database_uri: str = content_map["database"]["uri"]
+        self.__nats_configuration = content_map["nats"]
+        self.__port: int = int(content_map["port"])
+        self.__client: ServiceDiscoveryClient = client
         if self.__client is not None:
             self.__register_service()
         self.__test_mode = test_mode
@@ -77,6 +80,9 @@ class Configuration(object):
 
     def build_information(self) -> BuildInformation:
         return self.__build_information
+
+    def nats_configuration(self) -> Dict:
+        return self.__nats_configuration
 
     def port(self) -> int:
         return self.__port
@@ -143,5 +149,3 @@ class Configuration(object):
             else:
                 Configuration.__instance__ = Configuration.local()
         return Configuration.__instance__
-
-

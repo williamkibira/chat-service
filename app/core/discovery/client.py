@@ -4,6 +4,7 @@ from consulate import Session
 from decouple import config
 import abc
 
+
 class Credentials(object):
     def __init__(self):
         self.__host: str = config('CONSUL_HOST', default='localhost')
@@ -22,6 +23,7 @@ class Credentials(object):
 
     def token(self):
         return self.__token
+
 
 class ServiceDiscoveryClient(metaclass=abc.ABCMeta):
     @classmethod

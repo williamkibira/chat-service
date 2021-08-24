@@ -24,3 +24,8 @@ class SQLProvider(object):
 
     def provider(self) -> DataSource:
         return DataSource(session=self.__session)
+
+    def close(self):
+        if self.__session is not None:
+            self.__session.close()
+        self.__engine.dispose()

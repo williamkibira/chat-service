@@ -2,7 +2,7 @@ from typing import Dict, List
 import simplejson as json
 
 from app.domain.chat.messages.repository import MessageRepository
-from app.domain.chat.particpant.participant import Participant
+from app.domain.chat.participant.participant import Participant
 from app.domain.chat.types import MessageType
 
 

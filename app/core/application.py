@@ -12,8 +12,9 @@ from app.core.configuration import Configuration, BuildInformation
 from app.core.logging.loggers import Logger
 from app.core.security.restriction import Restrictions
 from app.core.service.factory import ServiceFactory
-from app.domain.chat.particpant.participant import ParticipantService
-from app.domain.core.protocol import ConnectionRegistry
+from app.domain.chat.participant.connections import ConnectionRegistry
+from app.domain.chat.participant.factory import get_client
+from app.domain.chat.participant.participant import ParticipantService
 
 if sys.platform == "win32":
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
@@ -25,9 +26,11 @@ class Application(object):
         self.__configuration = configuration
         self.logger = Logger(__file__)
         logging_middleware = get_logger_middleware(self.logger)
+        self.__event_loop = asyncio.get_event_loop()
         self.__participant_service = ParticipantService()
         self.command_bus = CommandBus(middlewares=[logging_middleware])
         self.registry = ConnectionRegistry(command_bus=self.command_bus, restrictions=Restrictions())
+        self.reactor = AsyncioSelectorReactor(eventloop=self.__event_loop)
 
     def run(self):
         build_information: BuildInformation = self.__configuration.build_information()
@@ -35,12 +38,16 @@ class Application(object):
 
     def __initialize(self, name: str, version: str) -> None:
         self.logger.info("Starting {0} VER: {1}".format(name, version))
-
-        return react(
-            lambda reactor: ensureDeferred(
-                self._initializer(reactor)
-            )
-        )
+        self.reactor.listenTCP(self.__configuration.port(),
+                               ServiceFactory(
+                                   registry=self.registry,
+                                   participant_service=self.__participant_service,
+                                   configuration=self.__configuration,
+                                   event_loop=self.__event_loop
+                               ))
+        asyncio.set_event_loop(self.__event_loop)
+        self.reactor.callLater(seconds=5, f=get_client().start_up)
+        self.reactor.run()
 
     async def _initializer(self, reactor: AsyncioSelectorReactor):
         reactor.listenTCP(self.__configuration.port(),
@@ -50,5 +57,5 @@ class Application(object):
                               configuration=self.__configuration,
                               event_loop=asyncio.get_event_loop()
                           ))
-        self.logger.info("Service Activated")
+        asyncio.get_event_loop().create_task(coro=get_client().start_up(), name="start-nats")
         reactor.run()
