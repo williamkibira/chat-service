@@ -27,6 +27,7 @@ class ServiceFactory(protocol.ServerFactory, LoggerMixin):
         self.__registry: ConnectionRegistry = registry
         self.__configuration: Configuration = configuration
         self.__participant_service = participant_service
+        get_client().register_subscriber(subscriber=self.__participant_service)
         self.__database_provider = SQLProvider(
             uri=self.__configuration.database_uri(),
             debug=config('DEBUG', default=True, cast=bool))

@@ -8,7 +8,7 @@ from twisted.python import failure
 from app.core.logging.loggers import LoggerMixin
 from app.domain.chat.messages.contract import Message
 from app.domain.chat.participant.connections import ClientConnection, ConnectionRegistry, DeviceDetails
-from app.domain.chat.participant.listeners import ParticipantPassOverListener
+from app.domain.chat.participant.listeners import ParticipantPassOverListener, EventListener
 from app.domain.chat.participant.node_pb2 import ParticipantPassOver
 from app.domain.chat.types import MESSAGE_HEADER, MessageType, ResponseType
 
@@ -41,11 +41,13 @@ class ParticipantService(LoggerMixin):
     def fetch(self, identifier) -> Participant:
         pass
 
-    @ParticipantPassOverListener(event=ParticipantPassOver)
+    @EventListener(subject="v1/node/participants/pass-over", event_type=ParticipantPassOver)
     def on_external_participant_event(self, event: ParticipantPassOver) -> None:
-        self._info("BEEN CALLED")
-        print(self.__class__.__name__)
-        print("CRACKERS")
+        self._info("CRACKERS WAS CALLED")
+        self._info("NICKNAME          : {0}".format(event.nickname))
+        self._info("SENDER            : {0}".format(event.sender_identifier))
+        self._info("TARGET            : {0}".format(event.target_identifier))
+        self._info("ORIGINATING NODE  : {0}".format(event.originating_node))
 
 
 class ConnectedClientProtocol(ClientConnection):

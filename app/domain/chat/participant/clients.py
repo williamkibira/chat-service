@@ -1,7 +1,5 @@
 import abc
-from typing import Optional, Callable
-
-from google.protobuf.message import Message
+from typing import Optional, Callable, T, Type
 
 from app.domain.chat.participant.identification_pb2 import Details
 
@@ -9,6 +7,8 @@ from app.domain.chat.participant.identification_pb2 import Details
 class ParticipantClient(abc.ABC):
     subscription_methods = {}
     subscription_events = {}
+    subscribers = {}
+    subscription_classes = {}
 
     @abc.abstractmethod
     def fetch_details(self, identifier: str) -> Optional[Details]:
@@ -23,6 +23,13 @@ class ParticipantClient(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def register_subscriber(self, subject: str, event: Message, handler_callback: Callable):
+    def register_subscription_handler(
+            self,
+            subject: str,
+            event_type: Type[T],
+            handler_callback: Callable,
+            subscriber: str):
         pass
 
+    def register_subscriber(self, subscriber: T = None) -> None:
+        self.subscribers[str(subscriber.__class__.__name__)] = subscriber

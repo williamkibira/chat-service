@@ -1,10 +1,7 @@
 import asyncio
-import distutils
-from asyncio import get_event_loop, get_event_loop_policy
 from distutils.util import strtobool
-from typing import Optional, Dict, Callable, List
+from typing import Optional, Dict, Callable, List, Type, T
 
-from google.protobuf.message import Message
 from nats.aio.client import Client
 from nats.aio.errors import ErrTimeout, ErrConnectionClosed, ErrNoServers
 
@@ -14,6 +11,7 @@ from app.core.logging.loggers import LoggerMixin
 from app.core.utilities.helpers import SingletonMixin
 from app.domain.chat.participant.clients import ParticipantClient
 from app.domain.chat.participant.identification_pb2 import Details, DetailsRequest
+from app.domain.chat.participant.node_pb2 import ParticipantPassOver
 
 USER_DETAILS: str = "v1/account-service/users/details"
 
@@ -45,7 +43,7 @@ class FakeParticipantClient(ParticipantClient, LoggerMixin, SingletonMixin):
         for i, k in self.__calls:
             self._info("SUBJECT : {}", i)
 
-    async def register_subscriber(self, subject: str, handler_callback: Callable):
+    async def register_subscription_handler(self, subject: str, handler_callback: Callable):
         self.__calls[subject] = handler_callback
         self._info("REGISTERED A CALLBACK HANDLER")
 
@@ -84,6 +82,7 @@ class NATSParticipantClient(ParticipantClient, LoggerMixin, SingletonMixin):
                     loop=loop
                 ))
                 self._info("NATS.IO CLIENT CONNECTED")
+                loop.create_task(name="register-nats.io-subscribers", coro=self.__register_all_subscriptions())
         except ErrNoServers as e:
             self._error(e)
 
@@ -115,27 +114,51 @@ class NATSParticipantClient(ParticipantClient, LoggerMixin, SingletonMixin):
         except ErrTimeout as e:
             self._error("Timeout occurred when publishing msg :{}".format(e))
 
-    def register_subscriber(self, subject: str, event: Message, handler_callback: Callable):
-        self.subscription_events[subject] = event
+    def register_subscription_handler(self, subject: str,
+                                      event_type: Type[T],
+                                      handler_callback: Callable,
+                                      subscriber: str):
+        self.subscription_events[subject] = event_type
         self.subscription_methods[subject] = handler_callback
+        self.subscription_classes[handler_callback] = subscriber
         self._info("REGISTERED CALLS")
-        # self.__client.subscribe(subject=subject, cb=lambda msg:)
+
+    async def __register_all_subscriptions(self):
+        for subject, method in self.subscription_methods.items():
+            await self.__client.subscribe(
+                subject=subject,
+                cb=lambda msg: method(
+                    self=self.subscribers[self.subscription_classes[method]],
+                    event=self.parse_information(subject=msg.subject, content=msg.data))
+            )
+        await self.test_subscription()
+
+    def parse_information(self, subject: str, content: bytearray):
+        event_type = self.subscription_events[subject]
+        message = event_type()
+        message.ParseFromString(content)
+        return message
+
+    async def test_subscription(self):
+        payload = ParticipantPassOver()
+        payload.nickname = "FOX"
+        payload.sender_identifier = "XXXXXX"
+        payload.target_identifier = "YYYYYY"
+        payload.originating_node = "saber-fox"
+        payload.payload = "guniowevw".encode()
+        await self.__client.publish(subject="v1/node/participants/pass-over", payload=payload.SerializeToString())
 
     async def __on_error_callback(self, error: Exception):
         self._error("{}".format(error))
 
-    @staticmethod
-    async def __on_disconnected_callback():
-        pass
+    async def __on_disconnected_callback(self):
+        self._warning("Disconnect from NATS.IO cluster")
 
-    @staticmethod
-    async def __on_closed_callback():
-        pass
+    async def __on_closed_callback(self):
+        self._info("Closing NATS.IO connection")
 
-    @staticmethod
-    async def __on_reconnected_callback():
-        pass
+    async def __on_reconnected_callback(self):
+        self._warning("Reconnecting to NATS.IO cluster")
 
-    @staticmethod
-    async def __on_discovered_callback():
-        pass
+    async def __on_discovered_callback(self):
+        self._info("Discovered on NATS.IO cluster")
