@@ -3,7 +3,7 @@ import enum
 MESSAGE_HEADER = int(6)
 
 
-class MessageType(enum.Enum):
+class RequestType(enum.Enum):
     IDENTITY = int(0)
     JOIN_GROUP = int(1)
     DIRECT_MESSAGE = int(2)

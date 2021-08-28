@@ -2,15 +2,16 @@ import abc
 from datetime import datetime
 from typing import Dict, NamedTuple, Optional
 
-import simplejson as json
+from google.protobuf.timestamp_pb2 import Timestamp
 from pymessagebus import CommandBus
 from twisted.internet.protocol import Protocol
 
-from app.domain.chat.types import ResponseType
 from app.core.logging.loggers import LoggerMixin
 from app.core.security.claims import Claims
-from app.domain.chat.participant.identification_pb2 import Identification, Device
 from app.core.security.restriction import Restrictions
+from app.domain.chat.participant.identification_pb2 import Identification, Device
+from app.domain.chat.participant.responses_pb2 import Info, Failure
+from app.domain.chat.types import ResponseType
 
 
 class DeviceDetails(object):
@@ -111,53 +112,65 @@ class ConnectionRegistry(LoggerMixin):
         self.__restrictions: Restrictions = restrictions
         command_bus.add_handler(DeviceBroadcastCommand, self.__handle_device_broadcast)
 
+    @staticmethod
+    def current_timestamp() -> Timestamp:
+        utc_now = datetime.utcnow()
+        current_time = Timestamp()
+        current_time.FromDatetime(utc_now)
+        return current_time
+
     def register(self, payload: bytearray, connection: ClientConnection) -> None:
+        self._info("ATTEMPTING REGISTRATION")
         identification: Identification = Identification()
         identification.ParseFromString(payload)
+        self._info("IDENTITY")
+        self._info("{}".format(identification))
         device_information = parse_from_device_proto(device=identification.device)
         claims: Claims = self.__restrictions.extract_token_claims(encrypted_token=str(identification.token))
         is_valid, error_message = Restrictions.verify_claim(claims=claims)
+        self._info("CLEARING REGISTRATION PENDING LIST")
         del self.__pending_registration[connection.unique_identifier()]
         self._logger.info("Removing connection from pending registration")
+
         if not is_valid:
-            content = json.dumps({
-                'error': 'IDENTITY-REJECTED',
-                'details': error_message,
-                'occurred_at': datetime.utcnow().isoformat()
-            })
-            connection.send_message(response_type=ResponseType.IDENTITY_REJECTION, payload=content.encode())
-            self._logger.error("IDENTIFICATION REJECTED FOR: {}", connection.nickname())
+            self._info("CONNECTION WAS REJECTED")
+            failure = Failure()
+            failure.error = "IDENTITY-REJECTED"
+            failure.details = error_message
+            failure.occurred_at.GetCurrentTime()
+            self._info("SENDING FAILURE MESSAGE")
+            connection.send_message(response_type=ResponseType.IDENTITY_REJECTION, payload=failure.SerializeToString())
+            self._logger.error("IDENTIFICATION REJECTED FOR: {}".format(connection.nickname()))
         elif self.__add_connection(claims=claims, connection=connection, device_information=device_information):
-            content = json.dumps({
-                'message': 'IDENTITY-ACCEPTED',
-                'details': "Your identity has been successfully validated",
-                'occurred_at': datetime.utcnow().isoformat()
-            })
-            connection.send_message(response_type=ResponseType.IDENTITY_ACCEPTED, payload=content.encode())
-            self._logger.info("IDENTIFICATION ACCEPTED -> WELCOME: {}", connection.nickname())
+            info = Info()
+            info.message = "IDENTITY-ACCEPTED"
+            info.details = "Your identity has been successfully validated"
+            info.occurred_at.GetCurrentTime()
+
+            connection.send_message(response_type=ResponseType.IDENTITY_ACCEPTED, payload=info.SerializeToString())
+            self._logger.info("IDENTIFICATION ACCEPTED -> WELCOME: {}".format(connection.nickname()))
 
     def remove(self, connection: ClientConnection):
         if self.__remove_connection(connection=connection):
-            content = json.dumps({
-                'message': 'IDENTITY-ACCEPTED',
-                'details': "Connected {0} {1}".format(
-                    connection.nickname(),
-                    connection.unique_identifier(),
-                ),
-                'occurred_at': datetime.utcnow().isoformat()
-            })
+            info = Info()
+            info.message = "IDENTITY-ACCEPTED"
+            info.details = "Your identity has been successfully validated"
+            info.occurred_at.GetCurrentTime()
             if connection.connected == 1:
-                connection.send_message(response_type=ResponseType.DISCONNECTION_ACCEPTED, payload=content.encode())
-                self._logger.info("GRACEFUL DISCONNECTION: -> {}", connection.nickname())
+                connection.send_message(
+                    response_type=ResponseType.DISCONNECTION_ACCEPTED,
+                    payload=info.SerializeToString()
+                )
+                self._logger.info("GRACEFUL DISCONNECTION: -> {}".format(connection.nickname()))
             else:
-                self._logger.warning("CONNECTION LOST: -> {}", connection.nickname())
+                self._logger.warning("CONNECTION LOST: -> {}".format(connection.nickname()))
         else:
             self._logger.error(
-                "NO MATCHING CONNECTION FOUND: -> {0} {1} \n DEVICE: {2}",
-                connection.nickname(),
-                connection.unique_identifier(),
-                connection.device()
-            )
+                "NO MATCHING CONNECTION FOUND: -> {0} {1} \n DEVICE: {2}".format(
+                    connection.nickname(),
+                    connection.unique_identifier(),
+                    connection.device()
+                ))
 
     def __add_connection(self, claims: Claims, device_information: DeviceDetails, connection: ClientConnection) -> bool:
         if claims.id() not in self.__connections:
@@ -169,10 +182,12 @@ class ConnectionRegistry(LoggerMixin):
         if connection.unique_identifier() in self.__pending_registration:
             del self.__pending_registration[connection.unique_identifier()]
             return True
-        if connection.participant_identifier() not in self.__connections:
+        elif connection.participant_identifier() is not None and \
+                connection.participant_identifier() in self.__connections:
             return self.__connections[connection.participant_identifier()].remove_connection(connection=connection)
 
     def add_to_pending_identification(self, connection: ClientConnection):
+        self._logger.info("ADDED CONNECTION TO PENDING IDENTIFICATION")
         self.__pending_registration[connection.unique_identifier()] = connection
 
     def __handle_device_broadcast(self, command: DeviceBroadcastCommand) -> None:

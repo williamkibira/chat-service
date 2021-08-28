@@ -10,7 +10,7 @@ from app.domain.chat.messages.contract import Message
 from app.domain.chat.participant.connections import ClientConnection, ConnectionRegistry, DeviceDetails
 from app.domain.chat.participant.listeners import ParticipantPassOverListener, EventListener
 from app.domain.chat.participant.node_pb2 import ParticipantPassOver
-from app.domain.chat.types import MESSAGE_HEADER, MessageType, ResponseType
+from app.domain.chat.types import MESSAGE_HEADER, RequestType, ResponseType
 
 
 class Participant(object):
@@ -50,7 +50,7 @@ class ParticipantService(LoggerMixin):
         self._info("ORIGINATING NODE  : {0}".format(event.originating_node))
 
 
-class ConnectedClientProtocol(ClientConnection):
+class ConnectedClientProtocol(ClientConnection, LoggerMixin):
 
     def __init__(self, registry: ConnectionRegistry, participant_service: ParticipantService):
         self.registry: ConnectionRegistry = registry
@@ -60,26 +60,34 @@ class ConnectedClientProtocol(ClientConnection):
         self.__device_information: Optional[DeviceDetails] = None
 
     def dataReceived(self, data: bytearray):
+        self._info("GOT A CONTROL MESSAGE")
         header = data[0:MESSAGE_HEADER]
         (message_type_value, message_size) = struct.unpack("!HL", header)
-        payload: bytes = bytes[MESSAGE_HEADER: message_size + MESSAGE_HEADER]
-        self.__process_message(message_type=MessageType(message_type_value), payload=payload)
+        self._info("CTRL -> {0} SIZE -> {1}".format(message_type_value, message_size))
+        payload: bytes = data[MESSAGE_HEADER: message_size + MESSAGE_HEADER]
+        self.__process_message(message_type=RequestType(message_type_value), payload=payload)
 
     def connectionMade(self):
         # Send a request for identification information
+        self._info("CONNECTION RECEIVED")
         self.registry.add_to_pending_identification(self)
         self.send_message(response_type=ResponseType.REQUEST_IDENTITY, payload="".encode())
 
     def connectionLost(self, reason: failure.Failure = connectionDone):
+        self._info("CONNECTION HAS BEEN LOST")
         self.registry.remove(self)
 
-    def __process_message(self, message_type: MessageType, payload: bytes) -> None:
-        if message_type == MessageType.IDENTITY:
-            self.registry.register(self, payload)
-        elif message_type == MessageType.DISCONNECT:
+    def __process_message(self, message_type: RequestType, payload: bytes) -> None:
+        self._info("PROCESSING CONTROL MESSAGE: {0} {1}".format(message_type, payload))
+        if message_type == RequestType.IDENTITY:
+            self._info("CONTROL MESSAGE IS IDENTITY")
+            self.registry.register(connection=self, payload=payload)
+        elif message_type == RequestType.DISCONNECT:
+            self._info("CONTROL MESSAGE IS DISCONNECT")
             self.registry.remove(self)
 
     def send_message(self, response_type: ResponseType, payload: bytearray) -> None:
+        self._info("SENDING CONTROL MESSAGE: {} {}".format(response_type, payload))
         packet = struct.pack("!HL", response_type.value, len(payload)) + payload
         self.transport.write(data=packet)
 

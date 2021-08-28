@@ -3,7 +3,7 @@ import simplejson as json
 
 from app.domain.chat.messages.repository import MessageRepository
 from app.domain.chat.participant.participant import Participant
-from app.domain.chat.types import MessageType
+from app.domain.chat.types import RequestType
 
 
 class Group(object):
@@ -12,11 +12,11 @@ class Group(object):
         self.__name = name
         self.__participants: Dict = {}
 
-    def broadcast(self, message_type: MessageType, payload: bytes):
+    def broadcast(self, message_type: RequestType, payload: bytes):
         for identifier, participant in self.__participants:
             participant.on_group_message_received(identifier=identifier, payload=payload)
 
-    def process_message(self, message_type: MessageType, payload: bytes):
+    def process_message(self, message_type: RequestType, payload: bytes):
         pass
 
     def join(self, participant: Participant):
