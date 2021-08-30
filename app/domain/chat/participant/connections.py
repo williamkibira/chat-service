@@ -151,16 +151,17 @@ class ConnectionRegistry(LoggerMixin):
             self._logger.info("IDENTIFICATION ACCEPTED -> WELCOME: {}".format(connection.nickname()))
 
     def remove(self, connection: ClientConnection):
+        info = Info()
+        info.message = "CONNECTION ENDED"
+        info.details = "We are initiating a disconnection sequence for your connection"
+        info.occurred_at.GetCurrentTime()
+        connection.send_message(
+            response_type=ResponseType.DISCONNECTION_ACCEPTED,
+            payload=info.SerializeToString()
+        )
         if self.__remove_connection(connection=connection):
-            info = Info()
-            info.message = "IDENTITY-ACCEPTED"
-            info.details = "Your identity has been successfully validated"
-            info.occurred_at.GetCurrentTime()
+
             if connection.connected == 1:
-                connection.send_message(
-                    response_type=ResponseType.DISCONNECTION_ACCEPTED,
-                    payload=info.SerializeToString()
-                )
                 self._logger.info("GRACEFUL DISCONNECTION: -> {}".format(connection.nickname()))
             else:
                 self._logger.warning("CONNECTION LOST: -> {}".format(connection.nickname()))
