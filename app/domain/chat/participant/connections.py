@@ -128,9 +128,6 @@ class ConnectionRegistry(LoggerMixin):
         device_information = parse_from_device_proto(device=identification.device)
         claims: Claims = self.__restrictions.extract_token_claims(encrypted_token=str(identification.token))
         is_valid, error_message = Restrictions.verify_claim(claims=claims)
-        self._info("CLEARING REGISTRATION PENDING LIST")
-        del self.__pending_registration[connection.unique_identifier()]
-        self._logger.info("Removing connection from pending registration")
 
         if not is_valid:
             self._info("CONNECTION WAS REJECTED")
@@ -146,9 +143,11 @@ class ConnectionRegistry(LoggerMixin):
             info.message = "IDENTITY-ACCEPTED"
             info.details = "Your identity has been successfully validated"
             info.occurred_at.GetCurrentTime()
-
             connection.send_message(response_type=ResponseType.IDENTITY_ACCEPTED, payload=info.SerializeToString())
             self._logger.info("IDENTIFICATION ACCEPTED -> WELCOME: {}".format(connection.nickname()))
+        self._info("CLEARING REGISTRATION PENDING LIST")
+        del self.__pending_registration[connection.unique_identifier()]
+        self._logger.info("Removing connection from pending registration")
 
     def remove(self, connection: ClientConnection):
         info = Info()
