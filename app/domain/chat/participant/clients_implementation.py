@@ -4,7 +4,7 @@ from typing import Optional, Dict, Callable, List, Type, T
 
 from nats.aio.client import Client
 from nats.aio.errors import ErrTimeout, ErrConnectionClosed, ErrNoServers
-
+import requests
 import app.domain.chat.participant.clients
 from app.core.configuration import Configuration
 from app.core.logging.loggers import LoggerMixin
@@ -102,6 +102,12 @@ class NATSParticipantClient(ParticipantClient, LoggerMixin, SingletonMixin):
             return None
         details_request: DetailsRequest = DetailsRequest()
         details_request.identifier = identifier
+        endpoint = "{}/{}".format(self.__configuration.authorization_url(),
+                                  "/api/v1/authorization-service/user-details")
+        content = requests.get(url=endpoint,
+                               headers={
+                                   "Authorization": "Bearer {}".format()
+                               })
         try:
             response = self.__client.request(subject=USER_DETAILS,
                                              payload=details_request.SerializeToString())

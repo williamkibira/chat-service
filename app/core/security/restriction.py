@@ -14,9 +14,9 @@ class Restrictions(object):
     def extract_token_claims(self, encrypted_token: bytearray) -> Optional[Claims]:
         try:
             jwe_token = jwe.JWE()
-            jwe_token.deserialize(encrypted_token, key=self.__private_key)
+            jwe_token.deserialize(encrypted_token.decode('utf-8'), key=self.__private_key)
             return Claims.parse(content=jwe_token.payload)
-        except jwe.JWException:
+        except jwe.JWException as err:
             return None
 
     @staticmethod

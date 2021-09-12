@@ -87,7 +87,7 @@ class DeviceBroadcastCommand(NamedTuple):
 class DeviceCollective(object):
     def __init__(self, participant_identifier: str):
         self.__participant_identifier = participant_identifier
-        self.__connections: Dict[ClientConnection] = []
+        self.__connections: Dict[ClientConnection] = {}
 
     def add_connection(self, connection: ClientConnection, device_information: DeviceDetails) -> bool:
         self.__connections[connection.unique_identifier()] = connection
@@ -120,40 +120,40 @@ class ConnectionRegistry(LoggerMixin):
         return current_time
 
     def register(self, payload: bytearray, connection: ClientConnection) -> None:
-        self._info("ATTEMPTING REGISTRATION")
         identification: Identification = Identification()
         identification.ParseFromString(payload)
-        self._info("IDENTITY")
-        self._info("{}".format(identification))
         device_information = parse_from_device_proto(device=identification.device)
-        claims: Claims = self.__restrictions.extract_token_claims(encrypted_token=str(identification.token))
+        claims: Claims = self.__restrictions.extract_token_claims(encrypted_token=identification.token)
         is_valid, error_message = Restrictions.verify_claim(claims=claims)
 
         if not is_valid:
             self._info("CONNECTION WAS REJECTED")
-            failure = Failure()
-            failure.error = "IDENTITY-REJECTED"
-            failure.details = error_message
-            failure.occurred_at.GetCurrentTime()
+            failure = Failure(
+                error="IDENTITY-REJECTED",
+                details=error_message,
+                occurred_at=self.current_timestamp()
+            )
             self._info("SENDING FAILURE MESSAGE")
             connection.send_message(response_type=ResponseType.IDENTITY_REJECTION, payload=failure.SerializeToString())
             self._logger.error("IDENTIFICATION REJECTED FOR: {}".format(connection.nickname()))
-        elif self.__add_connection(claims=claims, connection=connection, device_information=device_information):
-            info = Info()
-            info.message = "IDENTITY-ACCEPTED"
-            info.details = "Your identity has been successfully validated"
-            info.occurred_at.GetCurrentTime()
-            connection.send_message(response_type=ResponseType.IDENTITY_ACCEPTED, payload=info.SerializeToString())
-            self._logger.info("IDENTIFICATION ACCEPTED -> WELCOME: {}".format(connection.nickname()))
+        self.__add_connection(claims=claims, connection=connection, device_information=device_information)
+        info = Info(
+            message="IDENTITY-ACCEPTED",
+            details="Your identity has been successfully validated",
+            occurred_at=self.current_timestamp()
+        )
+
+        connection.send_message(response_type=ResponseType.IDENTITY_ACCEPTED, payload=info.SerializeToString())
+        self._logger.info("IDENTIFICATION ACCEPTED -> WELCOME: {}".format(connection.nickname()))
         self._info("CLEARING REGISTRATION PENDING LIST")
         del self.__pending_registration[connection.unique_identifier()]
-        self._logger.info("Removing connection from pending registration")
 
     def remove(self, connection: ClientConnection):
-        info = Info()
-        info.message = "CONNECTION ENDED"
-        info.details = "We are initiating a disconnection sequence for your connection"
-        info.occurred_at.GetCurrentTime()
+        info = Info(
+            message="CONNECTION ENDED",
+            details="We are initiating a disconnection sequence for your connection",
+            occurred_at=self.current_timestamp()
+        )
         connection.send_message(
             response_type=ResponseType.DISCONNECTION_ACCEPTED,
             payload=info.SerializeToString()
@@ -175,8 +175,8 @@ class ConnectionRegistry(LoggerMixin):
     def __add_connection(self, claims: Claims, device_information: DeviceDetails, connection: ClientConnection) -> bool:
         if claims.id() not in self.__connections:
             self.__connections[claims.id()] = DeviceCollective(participant_identifier=claims.id())
-        return self.__connections[claims.id()].add_connection(connection=connection,
-                                                              device_information=device_information)
+        self.__connections[claims.id()].add_connection(connection=connection,
+                                                       device_information=device_information)
 
     def __remove_connection(self, connection: ClientConnection) -> bool:
         if connection.unique_identifier() in self.__pending_registration:
