@@ -9,6 +9,7 @@ from twisted.internet.protocol import Protocol
 from app.core.logging.loggers import LoggerMixin
 from app.core.security.claims import Claims
 from app.core.security.restriction import Restrictions
+from app.domain.chat.participant.commands import DeviceBroadcastCommand, MessageDispatchCommand
 from app.domain.chat.participant.identification_pb2 import Identification, Device
 from app.domain.chat.participant.responses_pb2 import Info, Failure
 from app.domain.chat.types import ResponseType
@@ -77,13 +78,6 @@ class ClientConnection(abc.ABC, Protocol):
         pass
 
 
-class DeviceBroadcastCommand(NamedTuple):
-    participant_identifier: str
-    unique_identifier: str
-    response_type: ResponseType
-    payload: bytearray
-
-
 class DeviceCollective(object):
     def __init__(self, participant_identifier: str):
         self.__participant_identifier = participant_identifier
@@ -104,6 +98,11 @@ class DeviceCollective(object):
          for identifier, connection in self.__connections if identifier is not unique_identifier]
         return True
 
+    def relay_to_devices(self, response_type: ResponseType, payload: bytearray) -> bool:
+        [connection.send_message(response_type=response_type, payload=payload)
+         for identifier, connection in self.__connections]
+        return True
+
 
 class ConnectionRegistry(LoggerMixin):
     def __init__(self, command_bus: CommandBus, restrictions: Restrictions):
@@ -111,6 +110,7 @@ class ConnectionRegistry(LoggerMixin):
         self.__pending_registration: Dict[ClientConnection] = {}
         self.__restrictions: Restrictions = restrictions
         command_bus.add_handler(DeviceBroadcastCommand, self.__handle_device_broadcast)
+        command_bus.add_handler(MessageDispatchCommand, self.__handle_message_delivery)
 
     @staticmethod
     def current_timestamp() -> Timestamp:
@@ -135,11 +135,11 @@ class ConnectionRegistry(LoggerMixin):
             )
             self._info("SENDING FAILURE MESSAGE")
             connection.send_message(response_type=ResponseType.IDENTITY_REJECTION, payload=failure.SerializeToString())
-            self._logger.error("IDENTIFICATION REJECTED FOR: {}".format(connection.nickname()))
+            self._logger.error("IDENTIFICATION REJECTED FOR: {}".format(connection.unique_identifier()))
         self.__add_connection(claims=claims, connection=connection, device_information=device_information)
         info = Info(
             message="IDENTITY-ACCEPTED",
-            details="Your identity has been successfully validated",
+            details="Welcome : {}".format(connection.nickname()),
             occurred_at=self.current_timestamp()
         )
 
@@ -194,6 +194,13 @@ class ConnectionRegistry(LoggerMixin):
         self._logger.info("Received a broad cast for the other devices that are connected")
         self.__connections[command.participant_identifier].send_to_other_devices(
             unique_identifier=command.unique_identifier,
+            payload=command.payload,
+            response_type=command.response_type
+        )
+
+    def __handle_message_delivery(self, command: MessageDispatchCommand) -> None:
+        self._logger.info("Received a broad cast for the other devices that are connected")
+        self.__connections[command.participant_identifier].relay_to_devices(
             payload=command.payload,
             response_type=command.response_type
         )

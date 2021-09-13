@@ -1,0 +1,19 @@
+CREATE TABLE IF NOT EXISTS participant_tb (
+	id SERIAL PRIMARY KEY,
+	uid UUID NOT NULL UNIQUE,
+	identifier UUID NOT NULL UNIQUE,
+	idx BIGSERIAL NOT NULL UNIQUE
+);
+
+CREATE INDEX participant_index_idx ON participant_tb USING btree(idx);
+
+CREATE TABLE IF NOT EXISTS device_tb (
+	id SERIAL PRIMARY KEY,
+	information TEXT NOT NULL,
+	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	idx BIGSERIAL NOT NULL UNIQUE
+);
+
+CREATE INDEX device_index_idx ON device_tb USING btree(idx);
+

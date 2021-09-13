@@ -11,5 +11,5 @@ nats:
   max_reconnect_attempts: 20
   servers:
     - "nats://127.0.0.1:4222"
-authorization:
+account-service:
   url: http://localhost:5000

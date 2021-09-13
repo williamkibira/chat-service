@@ -27,7 +27,7 @@ class Application(object):
         self.logger = Logger(__file__)
         logging_middleware = get_logger_middleware(self.logger)
         self.__event_loop = asyncio.get_event_loop()
-        self.__participant_service = ParticipantService()
+        self.__participant_service = ParticipantService(self.__configuration)
         self.command_bus = CommandBus(middlewares=[logging_middleware])
         self.registry = ConnectionRegistry(command_bus=self.command_bus, restrictions=Restrictions())
         self.reactor = AsyncioSelectorReactor(eventloop=self.__event_loop)
