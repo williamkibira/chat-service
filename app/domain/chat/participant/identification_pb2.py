@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n\x14identification.proto\"U\n\x06\x44\x65vice\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x18\n\x10operating_system\x18\x02 \x01(\t\x12\x0f\n\x07version\x18\x03 \x01(\t\x12\x12\n\nip_address\x18\x04 \x01(\t\"8\n\x0eIdentification\x12\r\n\x05token\x18\x01 \x01(\x0c\x12\x17\n\x06\x64\x65vice\x18\x02 \x01(\x0b\x32\x07.Device\"$\n\x0e\x44\x65tailsRequest\x12\x12\n\nidentifier\x18\x01 \x01(\t\"]\n\x07\x44\x65tails\x12\x12\n\nfirst_name\x18\x01 \x01(\t\x12\x11\n\tlast_name\x18\x02 \x01(\t\x12\x18\n\x10photo_identifier\x18\x03 \x01(\t\x12\x11\n\tnick_name\x18\x04 \x01(\tb\x06proto3'
+  serialized_pb=b'\n\x14identification.proto\"U\n\x06\x44\x65vice\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x18\n\x10operating_system\x18\x02 \x01(\t\x12\x0f\n\x07version\x18\x03 \x01(\t\x12\x12\n\nip_address\x18\x04 \x01(\t\"8\n\x0eIdentification\x12\r\n\x05token\x18\x01 \x01(\x0c\x12\x17\n\x06\x64\x65vice\x18\x02 \x01(\x0b\x32\x07.Device\"7\n\x0fRoutingIdentity\x12\x12\n\nidentifier\x18\x01 \x01(\t\x12\x10\n\x08nickname\x18\x02 \x01(\tb\x06proto3'
 )
 
 
@@ -117,17 +117,24 @@ _IDENTIFICATION = _descriptor.Descriptor(
 )
 
 
-_DETAILSREQUEST = _descriptor.Descriptor(
-  name='DetailsRequest',
-  full_name='DetailsRequest',
+_ROUTINGIDENTITY = _descriptor.Descriptor(
+  name='RoutingIdentity',
+  full_name='RoutingIdentity',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
-      name='identifier', full_name='DetailsRequest.identifier', index=0,
+      name='identifier', full_name='RoutingIdentity.identifier', index=0,
       number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='nickname', full_name='RoutingIdentity.nickname', index=1,
+      number=2, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -145,67 +152,13 @@ _DETAILSREQUEST = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=169,
-  serialized_end=205,
-)
-
-
-_DETAILS = _descriptor.Descriptor(
-  name='Details',
-  full_name='Details',
-  filename=None,
-  file=DESCRIPTOR,
-  containing_type=None,
-  create_key=_descriptor._internal_create_key,
-  fields=[
-    _descriptor.FieldDescriptor(
-      name='first_name', full_name='Details.first_name', index=0,
-      number=1, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=b"".decode('utf-8'),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
-    _descriptor.FieldDescriptor(
-      name='last_name', full_name='Details.last_name', index=1,
-      number=2, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=b"".decode('utf-8'),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
-    _descriptor.FieldDescriptor(
-      name='photo_identifier', full_name='Details.photo_identifier', index=2,
-      number=3, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=b"".decode('utf-8'),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
-    _descriptor.FieldDescriptor(
-      name='nick_name', full_name='Details.nick_name', index=3,
-      number=4, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=b"".decode('utf-8'),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
-  ],
-  extensions=[
-  ],
-  nested_types=[],
-  enum_types=[
-  ],
-  serialized_options=None,
-  is_extendable=False,
-  syntax='proto3',
-  extension_ranges=[],
-  oneofs=[
-  ],
-  serialized_start=207,
-  serialized_end=300,
+  serialized_end=224,
 )
 
 _IDENTIFICATION.fields_by_name['device'].message_type = _DEVICE
 DESCRIPTOR.message_types_by_name['Device'] = _DEVICE
 DESCRIPTOR.message_types_by_name['Identification'] = _IDENTIFICATION
-DESCRIPTOR.message_types_by_name['DetailsRequest'] = _DETAILSREQUEST
-DESCRIPTOR.message_types_by_name['Details'] = _DETAILS
+DESCRIPTOR.message_types_by_name['RoutingIdentity'] = _ROUTINGIDENTITY
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
 Device = _reflection.GeneratedProtocolMessageType('Device', (_message.Message,), {
@@ -222,19 +175,12 @@ Identification = _reflection.GeneratedProtocolMessageType('Identification', (_me
   })
 _sym_db.RegisterMessage(Identification)
 
-DetailsRequest = _reflection.GeneratedProtocolMessageType('DetailsRequest', (_message.Message,), {
-  'DESCRIPTOR' : _DETAILSREQUEST,
+RoutingIdentity = _reflection.GeneratedProtocolMessageType('RoutingIdentity', (_message.Message,), {
+  'DESCRIPTOR' : _ROUTINGIDENTITY,
   '__module__' : 'identification_pb2'
-  # @@protoc_insertion_point(class_scope:DetailsRequest)
+  # @@protoc_insertion_point(class_scope:RoutingIdentity)
   })
-_sym_db.RegisterMessage(DetailsRequest)
-
-Details = _reflection.GeneratedProtocolMessageType('Details', (_message.Message,), {
-  'DESCRIPTOR' : _DETAILS,
-  '__module__' : 'identification_pb2'
-  # @@protoc_insertion_point(class_scope:Details)
-  })
-_sym_db.RegisterMessage(Details)
+_sym_db.RegisterMessage(RoutingIdentity)
 
 
 # @@protoc_insertion_point(module_scope)

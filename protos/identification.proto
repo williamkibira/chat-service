@@ -12,13 +12,7 @@ message Identification {
     Device device = 2;
 }
 
-message DetailsRequest {
+message RoutingIdentity {
     string identifier = 1;
-}
-
-message Details {
-    string first_name = 1;
-    string last_name = 2;
-    string photo_identifier = 3;
-    string nick_name = 4;
+    string nickname = 2;
 }

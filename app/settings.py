@@ -1,6 +1,5 @@
 from os import path
 
-MODE = ""
 BASE_DIRECTORY = path.dirname(path.abspath(__file__))
 
 RESOURCES_DIRECTORY = path.join(BASE_DIRECTORY, "../resources")

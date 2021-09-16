@@ -5,8 +5,8 @@
 
 
 # Press the green button in the gutter to run the script.
-from app.core.application import Application
-from app.core.configuration import Configuration
+from app.application import Application
+from app.configuration import Configuration
 
 if __name__ == '__main__':
     application: Application = Application(configuration=Configuration.get_instance())

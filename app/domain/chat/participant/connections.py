@@ -1,7 +1,7 @@
 import abc
 from datetime import datetime
-from typing import Dict, NamedTuple, Optional
-
+from typing import Dict, Optional
+import simplejson
 from google.protobuf.timestamp_pb2 import Timestamp
 from pymessagebus import CommandBus
 from twisted.internet.protocol import Protocol
@@ -10,7 +10,7 @@ from app.core.logging.loggers import LoggerMixin
 from app.core.security.claims import Claims
 from app.core.security.restriction import Restrictions
 from app.domain.chat.participant.commands import DeviceBroadcastCommand, MessageDispatchCommand
-from app.domain.chat.participant.identification_pb2 import Identification, Device
+from app.domain.chat.participant.identification_pb2 import Identification, Device, RoutingIdentity
 from app.domain.chat.participant.responses_pb2 import Info, Failure
 from app.domain.chat.types import ResponseType
 
@@ -37,6 +37,15 @@ class DeviceDetails(object):
     @property
     def ip_address(self):
         return self.__ip_address
+
+    @property
+    def json(self):
+        return simplejson.dumps({
+            'name': self.__name,
+            'operating_system': self.__operating_system,
+            'version': self.__version,
+            'ip_address': self.__ip_address
+        })
 
 
 def parse_from_device_proto(device: Device) -> DeviceDetails:
@@ -75,6 +84,10 @@ class ClientConnection(abc.ABC, Protocol):
 
     @abc.abstractmethod
     def participant_identifier(self) -> Optional[str]:
+        pass
+
+    @abc.abstractmethod
+    def routing_identity(self) -> Optional[str]:
         pass
 
 
@@ -137,13 +150,13 @@ class ConnectionRegistry(LoggerMixin):
             connection.send_message(response_type=ResponseType.IDENTITY_REJECTION, payload=failure.SerializeToString())
             self._logger.error("IDENTIFICATION REJECTED FOR: {}".format(connection.unique_identifier()))
         self.__add_connection(claims=claims, connection=connection, device_information=device_information)
-        info = Info(
-            message="IDENTITY-ACCEPTED",
-            details="Welcome : {}".format(connection.nickname()),
-            occurred_at=self.current_timestamp()
+
+        identity = RoutingIdentity(
+            identifier=connection.routing_identity(),
+            nickname=connection.nickname()
         )
 
-        connection.send_message(response_type=ResponseType.IDENTITY_ACCEPTED, payload=info.SerializeToString())
+        connection.send_message(response_type=ResponseType.IDENTITY_ACCEPTED, payload=identity.SerializeToString())
         self._logger.info("IDENTIFICATION ACCEPTED -> WELCOME: {}".format(connection.nickname()))
         self._info("CLEARING REGISTRATION PENDING LIST")
         del self.__pending_registration[connection.unique_identifier()]

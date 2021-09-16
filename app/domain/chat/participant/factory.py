@@ -1,4 +1,4 @@
-from app.core.configuration import Configuration
+from app.configuration import Configuration
 from app.domain.chat.participant.clients import ParticipantClient
 from app.domain.chat.participant.clients_implementation import FakeParticipantClient, NATSParticipantClient
 

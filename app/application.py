@@ -5,10 +5,8 @@ from pymessagebus import CommandBus
 from pymessagebus.middleware.logger import get_logger_middleware
 from twisted.internet import asyncioreactor
 from twisted.internet.asyncioreactor import AsyncioSelectorReactor
-from twisted.internet.defer import ensureDeferred
-from twisted.internet.task import react
 
-from app.core.configuration import Configuration, BuildInformation
+from app.configuration import Configuration, BuildInformation
 from app.core.logging.loggers import Logger
 from app.core.security.restriction import Restrictions
 from app.core.service.factory import ServiceFactory

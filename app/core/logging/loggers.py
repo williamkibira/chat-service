@@ -5,7 +5,7 @@ import platform
 import sys
 import threading
 import structlog
-from app.core.configuration import BuildInformation
+from app.configuration import BuildInformation
 
 
 class LogEntryProcessor:

@@ -2,7 +2,7 @@ host: 0.0.0.0
 port: 5200
 health_check: http://localhost:5200/health-check
 database:
-  uri: sqlite:///sample.db
+  uri: postgresql://tester:tester@localhost:5442/chats
 nats:
   verbose: "true"
   allow_reconnect: "true"

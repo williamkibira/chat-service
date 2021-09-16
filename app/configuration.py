@@ -64,7 +64,7 @@ class Configuration(object):
             test_mode: bool = False) -> None:
         self.__build_information = build_information
         self.__database_uri: str = content_map["database"]["uri"]
-        self.__authorization_url: str = content_map["authorization"]["url"]
+        self.__account_service_url: str = content_map["account-service"]["url"]
         self.__nats_configuration = content_map["nats"]
         self.__port: int = int(content_map["port"])
         self.__client: ServiceDiscoveryClient = client
@@ -82,8 +82,8 @@ class Configuration(object):
     def build_information(self) -> BuildInformation:
         return self.__build_information
 
-    def authorization_url(self) -> str:
-        return self.__authorization_url
+    def account_service_url(self) -> str:
+        return self.__account_service_url
 
     def nats_configuration(self) -> Dict:
         return self.__nats_configuration

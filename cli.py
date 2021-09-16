@@ -1,6 +1,6 @@
 import click
 
-from app.core.configuration import Configuration
+from app.configuration import Configuration
 from app.core.database.migrations import SQLMigrationHandler
 from app.settings import MIGRATIONS_FOLDER
 

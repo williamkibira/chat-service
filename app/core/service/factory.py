@@ -5,7 +5,7 @@ from typing import Tuple
 from decouple import config
 from twisted.internet import protocol
 
-from app.core.configuration import Configuration
+from app.configuration import Configuration
 from app.core.database.provider import SQLProvider
 from app.core.logging.loggers import LoggerMixin
 from app.domain.chat.participant.connections import ConnectionRegistry

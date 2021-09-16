@@ -6,7 +6,7 @@ from nats.aio.client import Client
 from nats.aio.errors import ErrTimeout, ErrConnectionClosed, ErrNoServers
 import requests
 import app.domain.chat.participant.clients
-from app.core.configuration import Configuration
+from app.configuration import Configuration
 from app.core.logging.loggers import LoggerMixin
 from app.core.utilities.helpers import SingletonMixin
 from app.domain.chat.participant.clients import ParticipantClient
