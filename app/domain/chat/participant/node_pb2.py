@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n\nnode.proto\" \n\nNodeJoined\x12\x12\n\nidentifier\x18\x01 \x01(\t\"\x88\x01\n\x13ParticipantPassOver\x12\x10\n\x08nickname\x18\x01 \x01(\t\x12\x19\n\x11sender_identifier\x18\x02 \x01(\t\x12\x19\n\x11target_identifier\x18\x03 \x01(\t\x12\x18\n\x10originating_node\x18\x04 \x01(\t\x12\x0f\n\x07payload\x18\x05 \x01(\x0c\"]\n\x06Result\x12\x1e\n\x06status\x18\x01 \x01(\x0e\x32\x0e.Result.Status\x12\x0f\n\x07message\x18\x02 \x01(\t\"\"\n\x06Status\x12\x0b\n\x07SUCCESS\x10\x00\x12\x0b\n\x07\x46\x41ILURE\x10\x01\x62\x06proto3'
+  serialized_pb=b'\n\nnode.proto\"5\n\x11ParticipantJoined\x12\x12\n\nidentifier\x18\x01 \x01(\t\x12\x0c\n\x04node\x18\x02 \x01(\t\"3\n\x0fParticipantLeft\x12\x12\n\nidentifier\x18\x01 \x01(\t\x12\x0c\n\x04node\x18\x02 \x01(\t\"%\n\x0fLocationRequest\x12\x12\n\nidentifier\x18\x01 \x01(\t\" \n\x10LocationResponse\x12\x0c\n\x04node\x18\x02 \x01(\t\"v\n\x13ParticipantPassOver\x12\x19\n\x11sender_identifier\x18\x01 \x01(\t\x12\x19\n\x11target_identifier\x18\x02 \x01(\t\x12\x18\n\x10originating_node\x18\x03 \x01(\t\x12\x0f\n\x07payload\x18\x04 \x01(\x0c\"]\n\x06Result\x12\x1e\n\x06status\x18\x01 \x01(\x0e\x32\x0e.Result.Status\x12\x0f\n\x07message\x18\x02 \x01(\t\"\"\n\x06Status\x12\x0b\n\x07SUCCESS\x10\x00\x12\x0b\n\x07\x46\x41ILURE\x10\x01\x62\x06proto3'
 )
 
 
@@ -44,23 +44,30 @@ _RESULT_STATUS = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=246,
-  serialized_end=280,
+  serialized_start=374,
+  serialized_end=408,
 )
 _sym_db.RegisterEnumDescriptor(_RESULT_STATUS)
 
 
-_NODEJOINED = _descriptor.Descriptor(
-  name='NodeJoined',
-  full_name='NodeJoined',
+_PARTICIPANTJOINED = _descriptor.Descriptor(
+  name='ParticipantJoined',
+  full_name='ParticipantJoined',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
-      name='identifier', full_name='NodeJoined.identifier', index=0,
+      name='identifier', full_name='ParticipantJoined.identifier', index=0,
       number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='node', full_name='ParticipantJoined.node', index=1,
+      number=2, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -78,7 +85,110 @@ _NODEJOINED = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=14,
-  serialized_end=46,
+  serialized_end=67,
+)
+
+
+_PARTICIPANTLEFT = _descriptor.Descriptor(
+  name='ParticipantLeft',
+  full_name='ParticipantLeft',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='identifier', full_name='ParticipantLeft.identifier', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='node', full_name='ParticipantLeft.node', index=1,
+      number=2, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=69,
+  serialized_end=120,
+)
+
+
+_LOCATIONREQUEST = _descriptor.Descriptor(
+  name='LocationRequest',
+  full_name='LocationRequest',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='identifier', full_name='LocationRequest.identifier', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=122,
+  serialized_end=159,
+)
+
+
+_LOCATIONRESPONSE = _descriptor.Descriptor(
+  name='LocationResponse',
+  full_name='LocationResponse',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='node', full_name='LocationResponse.node', index=0,
+      number=2, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=161,
+  serialized_end=193,
 )
 
 
@@ -91,36 +201,29 @@ _PARTICIPANTPASSOVER = _descriptor.Descriptor(
   create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
-      name='nickname', full_name='ParticipantPassOver.nickname', index=0,
+      name='sender_identifier', full_name='ParticipantPassOver.sender_identifier', index=0,
       number=1, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='sender_identifier', full_name='ParticipantPassOver.sender_identifier', index=1,
+      name='target_identifier', full_name='ParticipantPassOver.target_identifier', index=1,
       number=2, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='target_identifier', full_name='ParticipantPassOver.target_identifier', index=2,
+      name='originating_node', full_name='ParticipantPassOver.originating_node', index=2,
       number=3, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='originating_node', full_name='ParticipantPassOver.originating_node', index=3,
-      number=4, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=b"".decode('utf-8'),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
-    _descriptor.FieldDescriptor(
-      name='payload', full_name='ParticipantPassOver.payload', index=4,
-      number=5, type=12, cpp_type=9, label=1,
+      name='payload', full_name='ParticipantPassOver.payload', index=3,
+      number=4, type=12, cpp_type=9, label=1,
       has_default_value=False, default_value=b"",
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -137,8 +240,8 @@ _PARTICIPANTPASSOVER = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=49,
-  serialized_end=185,
+  serialized_start=195,
+  serialized_end=313,
 )
 
 
@@ -177,23 +280,47 @@ _RESULT = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=187,
-  serialized_end=280,
+  serialized_start=315,
+  serialized_end=408,
 )
 
 _RESULT.fields_by_name['status'].enum_type = _RESULT_STATUS
 _RESULT_STATUS.containing_type = _RESULT
-DESCRIPTOR.message_types_by_name['NodeJoined'] = _NODEJOINED
+DESCRIPTOR.message_types_by_name['ParticipantJoined'] = _PARTICIPANTJOINED
+DESCRIPTOR.message_types_by_name['ParticipantLeft'] = _PARTICIPANTLEFT
+DESCRIPTOR.message_types_by_name['LocationRequest'] = _LOCATIONREQUEST
+DESCRIPTOR.message_types_by_name['LocationResponse'] = _LOCATIONRESPONSE
 DESCRIPTOR.message_types_by_name['ParticipantPassOver'] = _PARTICIPANTPASSOVER
 DESCRIPTOR.message_types_by_name['Result'] = _RESULT
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
-NodeJoined = _reflection.GeneratedProtocolMessageType('NodeJoined', (_message.Message,), {
-  'DESCRIPTOR' : _NODEJOINED,
+ParticipantJoined = _reflection.GeneratedProtocolMessageType('ParticipantJoined', (_message.Message,), {
+  'DESCRIPTOR' : _PARTICIPANTJOINED,
   '__module__' : 'node_pb2'
-  # @@protoc_insertion_point(class_scope:NodeJoined)
+  # @@protoc_insertion_point(class_scope:ParticipantJoined)
   })
-_sym_db.RegisterMessage(NodeJoined)
+_sym_db.RegisterMessage(ParticipantJoined)
+
+ParticipantLeft = _reflection.GeneratedProtocolMessageType('ParticipantLeft', (_message.Message,), {
+  'DESCRIPTOR' : _PARTICIPANTLEFT,
+  '__module__' : 'node_pb2'
+  # @@protoc_insertion_point(class_scope:ParticipantLeft)
+  })
+_sym_db.RegisterMessage(ParticipantLeft)
+
+LocationRequest = _reflection.GeneratedProtocolMessageType('LocationRequest', (_message.Message,), {
+  'DESCRIPTOR' : _LOCATIONREQUEST,
+  '__module__' : 'node_pb2'
+  # @@protoc_insertion_point(class_scope:LocationRequest)
+  })
+_sym_db.RegisterMessage(LocationRequest)
+
+LocationResponse = _reflection.GeneratedProtocolMessageType('LocationResponse', (_message.Message,), {
+  'DESCRIPTOR' : _LOCATIONRESPONSE,
+  '__module__' : 'node_pb2'
+  # @@protoc_insertion_point(class_scope:LocationResponse)
+  })
+_sym_db.RegisterMessage(LocationResponse)
 
 ParticipantPassOver = _reflection.GeneratedProtocolMessageType('ParticipantPassOver', (_message.Message,), {
   'DESCRIPTOR' : _PARTICIPANTPASSOVER,

@@ -1,15 +1,28 @@
 syntax = "proto3";
 
-message NodeJoined {
+message ParticipantJoined {
+    string identifier = 1;
+    string node = 2;
+}
+
+message ParticipantLeft {
+    string identifier = 1;
+    string node = 2;
+}
+
+message LocationRequest {
     string identifier = 1;
 }
 
+message LocationResponse {
+    string node = 2;
+}
+
 message ParticipantPassOver {
-    string nickname = 1;
-    string sender_identifier = 2;
-    string target_identifier = 3;
-    string originating_node = 4;
-    bytes payload = 5;
+    string sender_identifier = 1;
+    string target_identifier = 2;
+    string originating_node = 3;
+    bytes payload = 4;
 }
 
 message Result {

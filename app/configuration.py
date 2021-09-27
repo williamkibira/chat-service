@@ -62,6 +62,7 @@ class Configuration(object):
             content_map: Dict,
             client: ServiceDiscoveryClient,
             test_mode: bool = False) -> None:
+        self.__node = None
         self.__build_information = build_information
         self.__database_uri: str = content_map["database"]["uri"]
         self.__account_service_url: str = content_map["account-service"]["url"]
@@ -91,6 +92,9 @@ class Configuration(object):
     def port(self) -> int:
         return self.__port
 
+    def node(self) -> str:
+        return self.__node if self.__node is not None else "default"
+
     def is_in_test_mode(self):
         return self.__test_mode
 
@@ -98,7 +102,7 @@ class Configuration(object):
         tags: List = [self.__build_information.environment()]
         hostname = socket.gethostname()
         host = socket.gethostbyname(hostname)
-        self.__client.register(
+        self.__node = self.__client.register(
             name=self.__build_information.name(),
             host=host,
             port=self.__port,

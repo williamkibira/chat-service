@@ -27,5 +27,19 @@ message Attachment {
     string token = 4;
 }
 
+message Delivery {
+    string message = 1;
+    State state = 2;
+    string marker = 3;
+    string target_identifier = 4;
+    google.protobuf.Timestamp sent_at = 5;
+
+    enum State {
+        DELIVERED = 0;
+        READ = 1;
+        FAILED = 2;
+    }
+}
+
 
 

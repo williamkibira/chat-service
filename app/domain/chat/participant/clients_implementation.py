@@ -4,16 +4,16 @@ from typing import Optional, Dict, Callable, List, Type, T
 
 from nats.aio.client import Client
 from nats.aio.errors import ErrTimeout, ErrConnectionClosed, ErrNoServers
-import requests
+
 import app.domain.chat.participant.clients
 from app.configuration import Configuration
 from app.core.logging.loggers import LoggerMixin
 from app.core.utilities.helpers import SingletonMixin
 from app.domain.chat.participant.clients import ParticipantClient
-from app.domain.chat.participant.identification_pb2 import Details, DetailsRequest
-from app.domain.chat.participant.node_pb2 import ParticipantPassOver
+from app.domain.chat.participant.node_pb2 import ParticipantPassOver, LocationRequest, LocationResponse, \
+    ParticipantJoined, Result
 
-USER_DETAILS: str = "v1/account-service/users/details"
+ADDRESS_SERVICE: str = "v1/registry-service/address-book"
 
 
 class NATSConfiguration(object):
@@ -27,13 +27,11 @@ class NATSConfiguration(object):
 
 
 class FakeParticipantClient(ParticipantClient, LoggerMixin, SingletonMixin):
+
     def __init__(self):
         self.__calls: Dict = {}
         self._info("LOADED FAKE PARTICIPANT CLIENT")
         app.domain.chat.participant.clients.registry = self
-
-    def fetch_details(self, identifier: str) -> Optional[Details]:
-        pass
 
     def shutdown(self):
         pass
@@ -51,6 +49,12 @@ class FakeParticipantClient(ParticipantClient, LoggerMixin, SingletonMixin):
         # TODO
         # iterate through all call backs and have a lambda function inline with protocol buffer parsing
         # await nc.subscribe("help.>", cb=message_handler)
+        pass
+
+    def register_participant(self, routing_identifier: str):
+        pass
+
+    def fetch_last_known_node(self, target_identifier) -> Optional[str]:
         pass
 
 
@@ -96,29 +100,74 @@ class NATSParticipantClient(ParticipantClient, LoggerMixin, SingletonMixin):
         except ErrNoServers as e:
             self._error(e)
 
-    def fetch_details(self, identifier: str) -> Optional[Details]:
+    def fetch_last_known_node(self, target_identifier) -> Optional[str]:
         if not self.__client.is_connected:
             self._error("NATS.IO CLIENT NOT CONNECTED")
             return None
-        details_request: DetailsRequest = DetailsRequest()
-        details_request.identifier = identifier
-        endpoint = "{}/{}".format(self.__configuration.authorization_url(),
-                                  "/api/v1/authorization-service/user-details")
-        content = requests.get(url=endpoint,
-                               headers={
-                                   "Authorization": "Bearer {}".format()
-                               })
         try:
-            response = self.__client.request(subject=USER_DETAILS,
-                                             payload=details_request.SerializeToString())
-            details: Details = Details()
-            details.ParseFromString(response.data)
-            return details
+            request: LocationRequest = LocationRequest(identifier=target_identifier)
+            response = self.__client.request(subject="{}/{}".format(ADDRESS_SERVICE, "/current-location"),
+                                             payload=request.SerializeToString())
+            location: LocationResponse = LocationResponse()
+            location.ParseFromString(response.data)
+            return location.node
         except ErrConnectionClosed as e:
             self._error("Connection closed prematurely. {}", e)
+            return None
 
         except ErrTimeout as e:
             self._error("Timeout occurred when publishing msg :{}".format(e))
+            return None
+
+    def register_participant(self, routing_identifier: str) -> None:
+        if not self.__client.is_connected:
+            self._error("NATS.IO CLIENT NOT CONNECTED")
+            return None
+        try:
+            node: str = Configuration.get_instance().node()
+            request: ParticipantJoined = ParticipantJoined(
+                identifier=routing_identifier,
+                node=node
+            )
+            response = self.__client.request(subject="{}/{}".format(ADDRESS_SERVICE, "/register"),
+                                             payload=request.SerializeToString())
+            result: Result = Result()
+            result.ParseFromString(response.data)
+            if result.status == Result.Status.SUCCESS:
+                self._info("REGISTERED TO NODE: {} TO NODE: {} \n {}".format(
+                    routing_identifier,
+                    node,
+                    result.message
+                ))
+            elif result.status == Result.Status.SUCCESS:
+                self._error("FAILED TO REGISTER :{} TO NODE: {} TO NONE: {} \n {}".format(
+                    routing_identifier,
+                    node,
+                    result.message
+                ))
+
+        except ErrConnectionClosed as e:
+            self._error("Connection closed prematurely. {}", e)
+            return None
+
+        except ErrTimeout as e:
+            self._error("Timeout occurred when publishing msg :{}".format(e))
+            return None
+
+    def passover_direct_message_to(self, node: str, passover: ParticipantPassOver) -> None:
+        if not self.__client.is_connected:
+            self._error("NATS.IO CLIENT NOT CONNECTED")
+            return None
+        try:
+            self.__client.request(subject="v1/node/{}/participants/pass-over".format(node),
+                                  payload=passover.SerializeToString())
+        except ErrConnectionClosed as e:
+            self._error("Connection closed prematurely. {}", e)
+            return None
+
+        except ErrTimeout as e:
+            self._error("Timeout occurred when publishing msg :{}".format(e))
+            return None
 
     def register_subscription_handler(self, subject: str,
                                       event_type: Type[T],
@@ -147,12 +196,13 @@ class NATSParticipantClient(ParticipantClient, LoggerMixin, SingletonMixin):
 
     async def test_subscription(self):
         payload = ParticipantPassOver()
-        payload.nickname = "FOX"
         payload.sender_identifier = "XXXXXX"
         payload.target_identifier = "YYYYYY"
         payload.originating_node = "saber-fox"
         payload.payload = "guniowevw".encode()
-        await self.__client.publish(subject="v1/node/participants/pass-over", payload=payload.SerializeToString())
+        await self.__client.publish(
+            subject="v1/node/{}/participants/pass-over".format(Configuration.get_instance().node()),
+            payload=payload.SerializeToString())
 
     async def __on_error_callback(self, error: Exception):
         self._error("{}".format(error))

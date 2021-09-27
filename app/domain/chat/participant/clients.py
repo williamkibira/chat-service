@@ -1,7 +1,7 @@
 import abc
 from typing import Optional, Callable, T, Type
 
-from app.domain.chat.participant.identification_pb2 import Details
+from app.domain.chat.participant.node_pb2 import ParticipantPassOver
 
 
 class ParticipantClient(abc.ABC):
@@ -9,10 +9,6 @@ class ParticipantClient(abc.ABC):
     subscription_events = {}
     subscribers = {}
     subscription_classes = {}
-
-    @abc.abstractmethod
-    def fetch_details(self, identifier: str) -> Optional[Details]:
-        pass
 
     @abc.abstractmethod
     def shutdown(self):
@@ -33,3 +29,15 @@ class ParticipantClient(abc.ABC):
 
     def register_subscriber(self, subscriber: T = None) -> None:
         self.subscribers[str(subscriber.__class__.__name__)] = subscriber
+
+    @abc.abstractmethod
+    def fetch_last_known_node(self, target_identifier) -> Optional[str]:
+        pass
+
+    @abc.abstractmethod
+    def register_participant(self, routing_identifier: str) -> None:
+        pass
+
+    @abc.abstractmethod
+    def passover_direct_message_to(self, node: str, passover: ParticipantPassOver) -> None:
+        pass

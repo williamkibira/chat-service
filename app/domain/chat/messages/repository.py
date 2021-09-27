@@ -1,13 +1,12 @@
 import abc
+from datetime import datetime
 from typing import List
-
-from app.domain.chat.messages.contract import Message
 
 
 class MessageRepository(abc.ABC):
 
     @abc.abstractmethod
-    def add_message(self, message: Message):
+    def add_message(self, sender: str, target: str, payload: bytearray, received_at: datetime, node: str) -> None:
         pass
 
     @abc.abstractmethod

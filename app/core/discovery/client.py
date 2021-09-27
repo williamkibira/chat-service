@@ -1,3 +1,4 @@
+import uuid
 from typing import List
 import consulate
 from consulate import Session
@@ -38,12 +39,13 @@ class ServiceDiscoveryClient(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def register(
-            self, name: str,
+            self,
+            name: str,
             host: str,
             port: int,
             health_check: str,
             tags: List[str],
-            ttl_seconds: int = 10) -> None:
+            ttl_seconds: int = 10) -> str:
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -65,16 +67,17 @@ class ConsulClient(ServiceDiscoveryClient):
         )
 
     def register(
-            self, name: str,
+            self,
+            name: str,
             host: str,
             port: int,
             health_check: str,
             tags: List[str],
             ttl_seconds: int = 10) -> None:
-
+        service_id = "{}:{}".format(name, str(uuid.uuid4()))
         if self.__session.agent.service.register(
                 name=name,
-                service_id=name,
+                service_id=service_id,
                 address=host,
                 port=port,
                 tags=tags,
@@ -82,8 +85,10 @@ class ConsulClient(ServiceDiscoveryClient):
                 interval='{}s'.format(ttl_seconds)
         ):
             print("REGISTERED")
+            return service_id
         else:
             print("FAILED TO REGISTER")
+            return ""
 
     def fetch(self, tag: List[str], key: str) -> str:
         if key in self.__session.kv:
