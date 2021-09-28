@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n\nnode.proto\"5\n\x11ParticipantJoined\x12\x12\n\nidentifier\x18\x01 \x01(\t\x12\x0c\n\x04node\x18\x02 \x01(\t\"3\n\x0fParticipantLeft\x12\x12\n\nidentifier\x18\x01 \x01(\t\x12\x0c\n\x04node\x18\x02 \x01(\t\"%\n\x0fLocationRequest\x12\x12\n\nidentifier\x18\x01 \x01(\t\" \n\x10LocationResponse\x12\x0c\n\x04node\x18\x02 \x01(\t\"v\n\x13ParticipantPassOver\x12\x19\n\x11sender_identifier\x18\x01 \x01(\t\x12\x19\n\x11target_identifier\x18\x02 \x01(\t\x12\x18\n\x10originating_node\x18\x03 \x01(\t\x12\x0f\n\x07payload\x18\x04 \x01(\x0c\"]\n\x06Result\x12\x1e\n\x06status\x18\x01 \x01(\x0e\x32\x0e.Result.Status\x12\x0f\n\x07message\x18\x02 \x01(\t\"\"\n\x06Status\x12\x0b\n\x07SUCCESS\x10\x00\x12\x0b\n\x07\x46\x41ILURE\x10\x01\x62\x06proto3'
+  serialized_pb=b'\n\nnode.proto\"5\n\x11ParticipantJoined\x12\x12\n\nidentifier\x18\x01 \x01(\t\x12\x0c\n\x04node\x18\x02 \x01(\t\"3\n\x0fParticipantLeft\x12\x12\n\nidentifier\x18\x01 \x01(\t\x12\x0c\n\x04node\x18\x02 \x01(\t\"%\n\x0fLocationRequest\x12\x12\n\nidentifier\x18\x01 \x01(\t\" \n\x10LocationResponse\x12\x0c\n\x04node\x18\x02 \x01(\t\"\x86\x01\n\x13ParticipantPassOver\x12\x19\n\x11sender_identifier\x18\x01 \x01(\t\x12\x19\n\x11target_identifier\x18\x02 \x01(\t\x12\x18\n\x10originating_node\x18\x03 \x01(\t\x12\x0e\n\x06marker\x18\x04 \x01(\t\x12\x0f\n\x07payload\x18\x05 \x01(\x0c\"]\n\x06Result\x12\x1e\n\x06status\x18\x01 \x01(\x0e\x32\x0e.Result.Status\x12\x0f\n\x07message\x18\x02 \x01(\t\"\"\n\x06Status\x12\x0b\n\x07SUCCESS\x10\x00\x12\x0b\n\x07\x46\x41ILURE\x10\x01\x62\x06proto3'
 )
 
 
@@ -44,8 +44,8 @@ _RESULT_STATUS = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=374,
-  serialized_end=408,
+  serialized_start=391,
+  serialized_end=425,
 )
 _sym_db.RegisterEnumDescriptor(_RESULT_STATUS)
 
@@ -222,8 +222,15 @@ _PARTICIPANTPASSOVER = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='payload', full_name='ParticipantPassOver.payload', index=3,
-      number=4, type=12, cpp_type=9, label=1,
+      name='marker', full_name='ParticipantPassOver.marker', index=3,
+      number=4, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='payload', full_name='ParticipantPassOver.payload', index=4,
+      number=5, type=12, cpp_type=9, label=1,
       has_default_value=False, default_value=b"",
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -240,8 +247,8 @@ _PARTICIPANTPASSOVER = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=195,
-  serialized_end=313,
+  serialized_start=196,
+  serialized_end=330,
 )
 
 
@@ -280,8 +287,8 @@ _RESULT = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=315,
-  serialized_end=408,
+  serialized_start=332,
+  serialized_end=425,
 )
 
 _RESULT.fields_by_name['status'].enum_type = _RESULT_STATUS

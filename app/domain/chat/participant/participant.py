@@ -10,7 +10,7 @@ from twisted.python import failure
 
 from app.configuration import Configuration
 from app.core.logging.loggers import LoggerMixin
-from app.domain.chat.messages.messages_pb2 import DirectMessage
+from app.domain.chat.messages.messages_pb2 import DirectMessage, Delivery
 from app.domain.chat.messages.repository import MessageRepository
 from app.domain.chat.participant.clients import ParticipantClient
 from app.domain.chat.participant.commands import MessageDispatchCommand
@@ -78,6 +78,7 @@ class ParticipantService(LoggerMixin):
         self._info("SENDER            : {0}".format(event.sender_identifier))
         self._info("TARGET            : {0}".format(event.target_identifier))
         self._info("ORIGINATING NODE  : {0}".format(event.originating_node))
+        self._info("MARKER            : {0}".format(event.marker))
 
         if event.target_identifier in self.__route_pairing:
             target_identifier = self.__route_pairing[event.target_identifier]
@@ -86,10 +87,11 @@ class ParticipantService(LoggerMixin):
                 payload=event.payload,
                 response_type=ResponseType.RECEIVE_DIRECT_MESSAGE
             ))
-            self.__persist_in_direct_message(
+            self.__save_direct_message(
                 sender_identifier=event.sender_identifier,
                 target_identifier=target_identifier,
-                message=event.payload
+                message=event.payload,
+                marker=event.marker
             )
 
     def resolve_contacts(self, content: bytearray) -> bytearray:
@@ -150,7 +152,7 @@ class ParticipantService(LoggerMixin):
     def relay_direct_message(self, sender_identifier: str, payload: bytearray) -> None:
         direct_message = DirectMessage()
         direct_message.ParseFromString(payload)
-
+        marker = str(uuid.uuid4())
         if direct_message.target_identifier in self.__route_pairing:
             target_identifier = self.__route_pairing[direct_message.target_identifier]
             self.__command_bus.handle(MessageDispatchCommand(
@@ -158,37 +160,107 @@ class ParticipantService(LoggerMixin):
                 payload=payload,
                 response_type=ResponseType.RECEIVE_DIRECT_MESSAGE
             ))
-            self.__persist_in_direct_message(
+            self.__save_direct_message(
                 sender_identifier=sender_identifier,
                 target_identifier=target_identifier,
-                message=payload
+                message=payload,
+                marker=marker
             )
+            self.__report_delivery_success(sender_identifier=sender_identifier,
+                                           target_identifier=direct_message.target_identifier,
+                                           marker=marker)
         else:
             node: str = self.__resolve_last_known_node(target_identifier=direct_message.target_identifier)
             if node is None:
                 self.__report_delivery_failure(sender_identifier=sender_identifier,
+                                               target_identifier=direct_message.target_identifier,
                                                delivery_failed_at=direct_message.sent_at)
             else:
                 self.__send_direct_message_to_node(node=node,
                                                    sender_identifier=sender_identifier,
-                                                   target_identifier=direct_message.target_identifier)
+                                                   target_identifier=direct_message.target_identifier,
+                                                   marker=marker,
+                                                   payload=payload)
 
     def save_device_information(self, participant_identifier: str, device_information: DeviceDetails) -> None:
         self.__participant_repository.add_device(participant_identifier=participant_identifier,
                                                  device=device_information)
 
-    def __persist_in_direct_message(self, sender_identifier: str, target_identifier: str, message: bytearray) -> None:
+    def __save_direct_message(self, sender_identifier: str, target_identifier: str, message: bytearray,
+                              marker: str) -> None:
         current_time = datetime.utcnow()
-        self.__message_repository.add_message(
+        self.__message_repository.save(
             sender=sender_identifier,
             target=target_identifier,
             payload=message,
+            marker=marker,
             received_at=current_time
         )
 
-    def __report_delivery_failure(self, sender_identifier: str, sender_timestamp: Timestamp) -> None:
-        # TODO: Figure out how to send over the failure message back to the client @ timestamp
-        pass
+    def __report_delivery_success(
+            self,
+            sender_identifier: str,
+            target_identifier: str,
+            marker: str) -> None:
+        utc_now = datetime.utcnow()
+        current_time = Timestamp()
+        current_time.FromDatetime(utc_now)
+        self.__send_delivery_status(
+            sender_identifier=sender_identifier,
+            target_identifier=target_identifier,
+            message="Successfully delivered message",
+            marker=marker,
+            status=Delivery.State.FAILED,
+            sent_at=current_time
+        )
+
+    def __report_message_read(self, sender_identifier: str,
+                              target_identifier: str,
+                              marker: str) -> None:
+        utc_now = datetime.utcnow()
+        current_time = Timestamp()
+        current_time.FromDatetime(utc_now)
+        self.__send_delivery_status(
+            sender_identifier=sender_identifier,
+            target_identifier=target_identifier,
+            message="Successfully delivered message",
+            marker=marker,
+            status=Delivery.State.READ,
+            sent_at=current_time
+        )
+
+    def __report_delivery_failure(self, sender_identifier: str,
+                                  target_identifier: str,
+                                  sender_timestamp: Timestamp) -> None:
+        self.__send_delivery_status(
+            sender_identifier=sender_identifier,
+            target_identifier=target_identifier,
+            message="Failed to deliver the message :(",
+            marker="",
+            status=Delivery.State.FAILED,
+            sent_at=sender_timestamp
+        )
+
+    def __send_delivery_status(self,
+                               sender_identifier: str,
+                               target_identifier: str,
+                               message: str,
+                               marker: str,
+                               status: Delivery.State,
+                               sender_timestamp: Timestamp) -> None:
+        delivery_note: Delivery = Delivery(
+            message=message,
+            state=status,
+            marker=marker,
+            target_identifier=target_identifier,
+            sent_at=sender_timestamp
+        )
+        self.__command_bus.handle(MessageDispatchCommand(
+            participant_identifier=self.__route_pairing[sender_identifier],
+            payload=delivery_note.SerializeToString(),
+            response_type=ResponseType.DELIVERY_STATE,
+            sent_at=sender_timestamp
+        ))
 
     @staticmethod
     def __resolve_last_known_node(target_identifier: str) -> Optional[str]:

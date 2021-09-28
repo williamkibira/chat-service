@@ -21,3 +21,4 @@ class ResponseType(enum.Enum):
     DISCONNECTION_ACCEPTED = int(3)
     CONTACT_BATCH = int(4)
     RECEIVE_DIRECT_MESSAGE = int(5)
+    DELIVERY_STATE = int(6)

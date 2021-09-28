@@ -20,7 +20,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n\x0emessages.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xed\x01\n\rDirectMessage\x12!\n\x04type\x18\x01 \x01(\x0e\x32\x13.DirectMessage.Type\x12\x0f\n\x07\x63ontent\x18\x02 \x01(\x0c\x12\x19\n\x11sender_identifier\x18\x03 \x01(\t\x12\x19\n\x11target_identifier\x18\x04 \x01(\t\x12+\n\x07sent_at\x18\x05 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\"E\n\x04Type\x12\x08\n\x04\x46ILE\x10\x00\x12\x08\n\x04TEXT\x10\x01\x12\x08\n\x04LINK\x10\x02\x12\t\n\x05VIDEO\x10\x03\x12\t\n\x05\x41UDIO\x10\x04\x12\t\n\x05OTHER\x10\x05\"F\n\nAttachment\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0e\n\x06length\x18\x02 \x01(\x03\x12\x0b\n\x03uri\x18\x03 \x01(\t\x12\r\n\x05token\x18\x04 \x01(\tb\x06proto3'
+  serialized_pb=b'\n\x0emessages.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xed\x01\n\rDirectMessage\x12!\n\x04type\x18\x01 \x01(\x0e\x32\x13.DirectMessage.Type\x12\x0f\n\x07\x63ontent\x18\x02 \x01(\x0c\x12\x19\n\x11sender_identifier\x18\x03 \x01(\t\x12\x19\n\x11target_identifier\x18\x04 \x01(\t\x12+\n\x07sent_at\x18\x05 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\"E\n\x04Type\x12\x08\n\x04\x46ILE\x10\x00\x12\x08\n\x04TEXT\x10\x01\x12\x08\n\x04LINK\x10\x02\x12\t\n\x05VIDEO\x10\x03\x12\t\n\x05\x41UDIO\x10\x04\x12\t\n\x05OTHER\x10\x05\"F\n\nAttachment\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0e\n\x06length\x18\x02 \x01(\x03\x12\x0b\n\x03uri\x18\x03 \x01(\t\x12\r\n\x05token\x18\x04 \x01(\t\"\xc1\x01\n\x08\x44\x65livery\x12\x0f\n\x07message\x18\x01 \x01(\t\x12\x1e\n\x05state\x18\x02 \x01(\x0e\x32\x0f.Delivery.State\x12\x0e\n\x06marker\x18\x03 \x01(\t\x12\x19\n\x11target_identifier\x18\x04 \x01(\t\x12+\n\x07sent_at\x18\x05 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\",\n\x05State\x12\r\n\tDELIVERED\x10\x00\x12\x08\n\x04READ\x10\x01\x12\n\n\x06\x46\x41ILED\x10\x02\x62\x06proto3'
   ,
   dependencies=[google_dot_protobuf_dot_timestamp__pb2.DESCRIPTOR,])
 
@@ -70,6 +70,36 @@ _DIRECTMESSAGE_TYPE = _descriptor.EnumDescriptor(
   serialized_end=289,
 )
 _sym_db.RegisterEnumDescriptor(_DIRECTMESSAGE_TYPE)
+
+_DELIVERY_STATE = _descriptor.EnumDescriptor(
+  name='State',
+  full_name='Delivery.State',
+  filename=None,
+  file=DESCRIPTOR,
+  create_key=_descriptor._internal_create_key,
+  values=[
+    _descriptor.EnumValueDescriptor(
+      name='DELIVERED', index=0, number=0,
+      serialized_options=None,
+      type=None,
+      create_key=_descriptor._internal_create_key),
+    _descriptor.EnumValueDescriptor(
+      name='READ', index=1, number=1,
+      serialized_options=None,
+      type=None,
+      create_key=_descriptor._internal_create_key),
+    _descriptor.EnumValueDescriptor(
+      name='FAILED', index=2, number=2,
+      serialized_options=None,
+      type=None,
+      create_key=_descriptor._internal_create_key),
+  ],
+  containing_type=None,
+  serialized_options=None,
+  serialized_start=513,
+  serialized_end=557,
+)
+_sym_db.RegisterEnumDescriptor(_DELIVERY_STATE)
 
 
 _DIRECTMESSAGE = _descriptor.Descriptor(
@@ -185,11 +215,76 @@ _ATTACHMENT = _descriptor.Descriptor(
   serialized_end=361,
 )
 
+
+_DELIVERY = _descriptor.Descriptor(
+  name='Delivery',
+  full_name='Delivery',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='message', full_name='Delivery.message', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='state', full_name='Delivery.state', index=1,
+      number=2, type=14, cpp_type=8, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='marker', full_name='Delivery.marker', index=2,
+      number=3, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='target_identifier', full_name='Delivery.target_identifier', index=3,
+      number=4, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='sent_at', full_name='Delivery.sent_at', index=4,
+      number=5, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+    _DELIVERY_STATE,
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=364,
+  serialized_end=557,
+)
+
 _DIRECTMESSAGE.fields_by_name['type'].enum_type = _DIRECTMESSAGE_TYPE
 _DIRECTMESSAGE.fields_by_name['sent_at'].message_type = google_dot_protobuf_dot_timestamp__pb2._TIMESTAMP
 _DIRECTMESSAGE_TYPE.containing_type = _DIRECTMESSAGE
+_DELIVERY.fields_by_name['state'].enum_type = _DELIVERY_STATE
+_DELIVERY.fields_by_name['sent_at'].message_type = google_dot_protobuf_dot_timestamp__pb2._TIMESTAMP
+_DELIVERY_STATE.containing_type = _DELIVERY
 DESCRIPTOR.message_types_by_name['DirectMessage'] = _DIRECTMESSAGE
 DESCRIPTOR.message_types_by_name['Attachment'] = _ATTACHMENT
+DESCRIPTOR.message_types_by_name['Delivery'] = _DELIVERY
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
 DirectMessage = _reflection.GeneratedProtocolMessageType('DirectMessage', (_message.Message,), {
@@ -205,6 +300,13 @@ Attachment = _reflection.GeneratedProtocolMessageType('Attachment', (_message.Me
   # @@protoc_insertion_point(class_scope:Attachment)
   })
 _sym_db.RegisterMessage(Attachment)
+
+Delivery = _reflection.GeneratedProtocolMessageType('Delivery', (_message.Message,), {
+  'DESCRIPTOR' : _DELIVERY,
+  '__module__' : 'messages_pb2'
+  # @@protoc_insertion_point(class_scope:Delivery)
+  })
+_sym_db.RegisterMessage(Delivery)
 
 
 # @@protoc_insertion_point(module_scope)

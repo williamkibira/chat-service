@@ -1,0 +1,15 @@
+CREATE TABLE IF NOT EXISTS direct_message_tb (
+	id SERIAL PRIMARY KEY,
+	sender_id BIGINT NOT NULL,
+	target_id BIGINT NOT NULL,
+	message BYTEA NOT NULL,
+	node VARCHAR NOT NULL,
+	marker UUID NOT NULL,
+	status VARCHAR NOT NULL,
+	received_at TIMESTAMP DEFAULT NOT NULL,
+	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	idx BIGSERIAL NOT NULL UNIQUE
+);
+
+CREATE INDEX direct_message_idx ON device_information_tb USING btree(idx);

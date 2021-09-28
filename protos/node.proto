@@ -22,7 +22,8 @@ message ParticipantPassOver {
     string sender_identifier = 1;
     string target_identifier = 2;
     string originating_node = 3;
-    bytes payload = 4;
+    string marker = 4;
+    bytes payload = 5;
 }
 
 message Result {
