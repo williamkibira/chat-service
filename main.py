@@ -2,11 +2,14 @@
 
 # Press Shift+F10 to execute it or replace it with your code.
 # Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
-from domain.core.application import Application
+
 
 # Press the green button in the gutter to run the script.
+from app.application import Application
+from app.configuration import Configuration
+
 if __name__ == '__main__':
-    application: Application = Application(port=4000)
+    application: Application = Application(configuration=Configuration.get_instance())
     application.run()
 
 

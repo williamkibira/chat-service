@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+message ParticipantJoined {
+    string identifier = 1;
+    string node = 2;
+}
+
+message ParticipantLeft {
+    string identifier = 1;
+    string node = 2;
+}
+
+message LocationRequest {
+    string identifier = 1;
+}
+
+message LocationResponse {
+    string node = 2;
+}
+
+message ParticipantPassOver {
+    string sender_identifier = 1;
+    string target_identifier = 2;
+    string originating_node = 3;
+    string marker = 4;
+    bytes payload = 5;
+}
+
+message Result {
+    Status status = 1;
+    string message = 2;
+
+    enum Status {
+        SUCCESS = 0;
+        FAILURE = 1;
+    }
+}
+

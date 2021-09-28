@@ -1,0 +1,5 @@
+host: 0.0.0.0
+port: 5200
+health_check: http://localhost:5200/health-check
+database:
+  uri: sqlite:///sample.db
